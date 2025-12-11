@@ -1,0 +1,294 @@
+﻿@page "/request/new"
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager NavigationManager
+
+<style>
+    .valid.modified:not([type=checkbox]) {
+        outline: 1px solid #26b050;
+    }
+
+    .invalid {
+        outline: 1px solid red;
+    }
+
+    .validation-message {
+        color: red;
+    }
+</style>
+<h1 class="m-xxl-3">طلب جديد</h1>
+@if (request == null)
+{
+    <p>Loading...</p>
+}
+<EditForm model="@request" OnValidSubmit="HandleOnValidSubmit">
+    <DataAnnotationsValidator />
+    <h3 class="mt-lg-5">معلومات الموظف</h3>
+    @* Choose exist client *@
+    <div class="form-group m-4 mb-3">
+        <label class="col-form-label w-100">اختر موظفًا موجودًا</label>
+        <div>
+            <InputSelect @bind-Value="clientId" class="form-control" @onchange="OnClientSelected">
+                <option value="">-- اختر موظفًا --</option>
+                @foreach (var c in clients)
+                {
+                    <option value="@c.Id">@c.Name</option>
+                }
+            </InputSelect>
+        </div>
+    </div>
+
+    <div class="container gap-3 border border-1 border-black rounded-3 p-3 m-4">
+       <div class="row">
+        <div class="form-group col mb-3">
+            <label class="col-form-label w-100">اسم الموظف <span class="text-danger">*</span></label>
+            <div>
+                <InputText class="form-control" @bind-Value="client.Name" Placeholder="Enter Full name" />
+                <ValidationMessage For="@(() => client.Name)" />
+            </div>
+        </div>
+
+        <div class="form-group col mb-3">
+            <label class="col-form-label w-100">رقم التواصل <span class="text-danger">*</span></label>
+            <div>
+                <InputNumber @bind-Value="client.ContactNumber" class="form-control" Placeholder="Enter contact Number" />
+                <ValidationMessage For="@(() => client.ContactNumber)" />
+            </div>
+        </div>
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">أسم المبنى<span class="text-danger">*</span></label>
+                <div>
+                    <InputText @bind-Value="client.BuildingName" class="form-control" Placeholder="Enter the Department" />
+                    <ValidationMessage For="@(() => client.BuildingName)" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">رقم المبنى <span class="text-danger">*</span></label>
+                <div>
+                    <InputNumber @bind-Value="client.BuildingNumber" class="form-control" Placeholder="Enter building Number" />
+                    <ValidationMessage For="@(() => client.BuildingNumber)" />
+                </div>
+            </div>
+
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">رقم المكتب <span class="text-danger">*</span></label>
+                <div>
+                    <InputText @bind-Value="client.OfficeNumber" class="form-control" Placeholder="Enter office Number" />
+                    <ValidationMessage For="@(() => client.OfficeNumber)" />
+                </div>
+            </div>
+
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">القسم<span class="text-danger">*</span></label>
+                <div>
+                    <InputText @bind-Value="client.Department" class="form-control" Placeholder="Enter the Department" />
+                    <ValidationMessage For="@(() => client.Department)" />
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <h3 class="mt-lg-5">معلومات الطلب</h3>
+    <div class="container gap-3 border border-1 border-black rounded-3 p-3 m-4">
+        <div class="row">
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">نوع الالة<span class="text-danger">*</span></label>
+                <div>
+                    <InputText @bind-Value="request.MachineType" class="form-control" Placeholder="Enter the Machine type" />
+                    <ValidationMessage For="@(() => request.MachineType)" />
+                </div>
+            </div>
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">كود الالة<span class="text-danger">*</span></label>
+                <div>
+                    <InputText @bind-Value="request.MachineCode" class="form-control" Placeholder="Enter the Machine code" />
+                    <ValidationMessage For="@(() => request.MachineCode)" />
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col mb-3">
+            <label>اختر قطعة غيار</label>
+                <InputSelect @bind-Value="componentId" class="form-control" @onchange="OnComponentSelected">
+                <option value="">-- Choose spare part --</option>
+                    @foreach (var c in components)
+                {
+                    <option value="@c.Id">@c.Name   |   @c.Code </option>
+                }
+            </InputSelect>
+            </div>
+            <div class="form-group col mb-3">
+                <div>
+                    <label>حالة الطلب</label>
+                    <Badge Color="@colorBage" Type VisuallyHiddenText="@request.Status">@request.Status</Badge>
+                </div>
+                <InputSelect @bind-Value="status" class="form-control" @onchange="OnStatusSelected">
+                     <option value="pending">تحت المعالجة</option>
+                    <option value="canceled">ملغي</option>
+                    <option value="done">مغلق</option>
+                </InputSelect>
+            </div>
+        </div>
+        <div class="form-group col mb-3">
+            <label class="col-form-label w-100">ملاحظات</label>
+            <div>
+                <TextAreaInput @bind-Value="request.Note" class="form-control" Placeholder="Enter Notes" />
+                <ValidationMessage For="@(() => request.Note)" />
+            </div>
+        </div>
+    </div>
+    <h3 class="mt-lg-5">معلومات الفني</h3>
+    <div class="container gap-3 border border-1 border-black rounded-3 p-3 m-4">
+        <div class="row">
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">اسم الفني<span class="text-danger">*</span></label>
+                <div>
+                    <InputText @bind-Value="technician.Name" class="form-control" Placeholder="Enter Techncian name" />
+                    <ValidationMessage For="@(() => technician.Name)" />
+                </div>
+            </div>
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">رقم الفني<span class="text-danger">*</span></label>
+                <div>
+                    <InputNumber @bind-Value="technician.PhoneNumber" class="form-control" Placeholder="Enter the Machine code" />
+                    <ValidationMessage For="@(() => technician.PhoneNumber)" />
+                </div>
+            </div>
+        </div>
+        <div>
+            <label>اختر فني من القائمة</label>
+            <InputSelect @bind-Value="technicianId" class="form-control" @onchange="OnTechnicianSelected">
+                <option value="">-- Choose Technicain --</option>
+                @foreach (var tech in technicians)
+                {
+                    <option value="@tech.Id">@tech.Name</option>
+                }
+            </InputSelect>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 text-right d-flex w-auto justify-content-between">
+            <Button Type="ButtonType.Button" Color="ButtonColor.Secondary" Class="float-end" @onclick="Cancel">إلغاء</Button>
+            <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2" Disabled="@disableSave">حفظ</Button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private bool disableSave = false; // Start with save disabled
+    private Client client = null!;
+    private Request request = new();
+    private Component component = null!;
+    private Technician technician = null!;
+    private EditContext? editContext;
+    private int clientId;
+    private int? componentId;
+    private int technicianId;
+    private string status = "";
+    private Client[] clients = [];
+    private Component[] components = [];
+    private Technician[] technicians = [];
+    private BadgeColor colorBage;
+
+
+    [Inject] private ToastService ToastService { get; set; } = default!;
+    [Inject] private IClientService ClientService { get; set; } = default!;
+    [Inject] private IComponentService CopmonentService { get; set; } = default!;
+    [Inject] private ITechnicianService TechnicianService { get; set; } = default!;
+    [Inject] private IRequestService RequestService { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        clients = (await ClientService.GetAllAsync()).ToArray();
+        components = (await CopmonentService.GetAvailable()).ToArray();
+        technicians = (await TechnicianService.GetAllAsync()).ToArray();
+
+        colorBage = BadgeColor.Warning;
+
+    }
+
+
+    public async void HandleOnValidSubmit()
+    {
+        request.Client = client;
+        request.ClientId = clientId;
+        request.Technician = technician;
+        request.TechnicianId = technicianId;
+        await ClientService.SaveAsync(client);
+        await TechnicianService.SaveAsync(technician);
+        if (componentId.HasValue)
+        {
+            component.Amount -= 1;
+            await CopmonentService.SaveAsync(component);
+            request.Component = component;
+        }
+        else request.Component = null;
+        await RequestService.SaveWithChilderenAsync(request);
+
+        var toastMessage = new ToastMessage
+        {
+            Title = "حفظ بيانات الموظف",
+            Message = $"تم حفظ بيانات الموظف بنجاح",
+            AutoHide = true,
+            Type = ToastType.Success,
+            IconName = IconName.CheckCircleFill,
+        };
+
+        ToastService.Notify(toastMessage);
+        NavigationManager.NavigateTo("/request");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/request");
+    }
+
+    private void OnClientSelected()
+    {
+        if (clientId > 0)
+        {
+            var selectedClient = clients.FirstOrDefault(c => c.Id == clientId);
+            if (selectedClient != null)
+            {
+                // Copy values from selected client to the current client instance
+                client.Name = selectedClient.Name;
+                client.ContactNumber = selectedClient.ContactNumber;
+                client.BuildingNumber = selectedClient.BuildingNumber;
+                client.Floor = selectedClient.Floor;
+                client.OfficeNumber = selectedClient.OfficeNumber;
+                client.Department = selectedClient.Department;
+            }
+        }
+        else
+        {
+            // Clear the form when no client is selected
+            client = new Client();
+        }
+    }
+    private void OnComponentSelected()
+    {
+        if (componentId.HasValue)
+        {
+            component = CopmonentService.GetByIdAsync(componentId.Value).Result;
+
+        }
+    }
+    private void OnStatusSelected()
+    {
+        request.Status = status;
+        colorBage = request.Status == "done"
+            ? BadgeColor.Success
+            : request.Status == "canceled"
+                ? BadgeColor.Danger
+                : BadgeColor.Warning;
+    }
+    private void OnTechnicianSelected()
+    {
+        if (technicianId > 0)
+        {
+            technician = TechnicianService.GetByIdAsync(technicianId).Result;
+        }
+    }
+}
