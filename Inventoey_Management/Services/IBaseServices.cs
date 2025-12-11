@@ -13,6 +13,8 @@ namespace Inventoey_Management.Services
         Task<int> DeleteAsync(T entity);
         Task<int> DeleteByID(int id);
         Task<T> UpdateAsync(int id,T data);
+        Task<T> SaveWithChilderenAsync(T entity);
+        public Task<List<T>> GetAllWithChildern();
 
     }
 }

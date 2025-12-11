@@ -1,7 +1,9 @@
 ﻿using Inventoey_Management.Models;
 using SQLite;
+using SQLiteNetExtensionsAsync.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Inventoey_Management.Services
@@ -56,5 +58,23 @@ namespace Inventoey_Management.Services
             }
             return entity;
         }
+        public Task<List<T>> GetAllWithChildern()
+        {
+            return _database.GetAllWithChildrenAsync<T>();
+        }
+        public Task<T> GetByIdWithChilderen(string id)
+        {
+            return _database.GetWithChildrenAsync<T>(id);
+        }
+        public async Task<T> SaveWithChilderenAsync(T entity)
+        {
+            await _database.InsertWithChildrenAsync(entity, recursive: true);
+            return entity;
+        }
+        protected Task<List<T>> QueryAsync(Expression<Func<T, bool>> predicate)
+        {
+            return _database.Table<T>().Where(predicate).ToListAsync();
+        }
+
     }
 }
