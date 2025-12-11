@@ -1,0 +1,78 @@
+﻿@inject NavigationManager NavigationManager
+<Grid TItem="Request"
+      Class="table table-hover table-bordered text-nowrap"
+      DataProvider="CustomersDataProvider"
+      AllowPaging="true"
+      AllowSorting="true"
+      AllowFiltering="true"
+      Responsive="true"
+      Unit="Unit.Px">
+
+    <GridColumns>
+        <GridColumn TItem="Request" Freeze="true" FreezeLeftPosition="0" HeaderText="رقم الطلب" PropertyName="Id" SortString="Id" SortKeySelector="item => item.Id" FilterTextboxWidth="50" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
+            @context.Id
+        </GridColumn>
+        <GridColumn TItem="Request" HeaderText="التاريخ" PropertyName="UpdatedAt" SortString="CustomerName" SortKeySelector="item => item.UpdatedAt" FilterTextboxWidth="80">
+            @context.UpdatedAt
+        </GridColumn>
+        <GridColumn TItem="Request" Filterable="false" HeaderText="حالة الطلب" PropertyName="Status" SortString="Status" SortKeySelector="item => item.Status" FilterTextboxWidth="50"
+                    ColumnClass="@(x => x.Status == "done" ? "table-success" : x.Status == "canceled" ? "table-danger" : "table-warning")">
+            >
+            @context.Status
+        </GridColumn>
+        <GridColumn TItem="Request" HeaderText="اسم المبنى" PropertyName="BuildingName" SortString="BuildingName" SortKeySelector="item => item.Client != null ? item.Client.BuildingName : null" FilterTextboxWidth="100">
+            @context.Client?.BuildingName
+        </GridColumn>
+        <GridColumn TItem="Request" HeaderText="القسم" PropertyName="Department" SortString="Department" SortKeySelector="item => item.Client != null ? item.Client.Department : null" FilterTextboxWidth="120">
+            @context.Client?.Department
+        </GridColumn>
+        <GridColumn TItem="Request" HeaderText="رقم المبنى" PropertyName="BuildingNumber" SortString="BuildingNumber" SortKeySelector="item => item.Client != null ? item.Client.BuildingNumber : null" FilterTextboxWidth="150">
+            @context.Client?.BuildingNumber
+        </GridColumn>
+        <GridColumn TItem="Request" HeaderText="رقم المكتب" PropertyName="OfficeNumber" SortString="OfficeNumber" SortKeySelector="item => item.Client != null ? item.Client.OfficeNumber : null" FilterTextboxWidth="80">
+            @context.Client?.OfficeNumber
+        </GridColumn>
+        <GridColumn TItem="Request" HeaderText="اسم العميل" PropertyName="Name" SortString="Name" SortKeySelector="item => item.Client != null ? item.Client.Name : null" FilterTextboxWidth="80">
+            @context.Client?.Name
+        </GridColumn>
+        <GridColumn TItem="Request" HeaderText="رقم العميل" PropertyName="Contact Number" SortString="ContactNumber" SortKeySelector="item => item.Client != null ? item.Client.ContactNumber : null" FilterTextboxWidth="80">
+            @context.Client?.ContactNumber
+        </GridColumn>
+        <GridColumn TItem="Request" HeaderText="نوع الآلة" PropertyName="MachineType" SortString="MachineType" SortKeySelector="item => item.MachineType" FilterTextboxWidth="80">
+            @context.MachineType
+        </GridColumn>
+        <GridColumn TItem="Request" HeaderText="كود الآلة" PropertyName="MachineCode" SortString="MachineCode" SortKeySelector="item => item.MachineCode" FilterTextboxWidth="80">
+            @context.MachineCode
+        </GridColumn>
+        <GridColumn TItem="Request" HeaderText="القطعة المستهلكة" PropertyName="Component" SortString="Component" SortKeySelector="item => item.Component != null ? item.Component.Name : null" FilterTextboxWidth="80">
+            @context.Component?.Name
+        </GridColumn>
+        <GridColumn Filterable="false" TItem="Request" HeaderText="عمليات">
+            <button class="btn btn-warning" @onclick="() => navigate(context.Id)">تعديل</button>
+        </GridColumn>
+    </GridColumns>
+</Grid>
+
+@code {
+    [Inject] public IRequestService requestService { get; set; } = default!;
+    private List<Request> result = new();
+
+    private async Task<GridDataProviderResult<Request>> CustomersDataProvider(GridDataProviderRequest<Request> request)
+    {
+        string sortString = "";
+        SortDirection sortDirection = SortDirection.None;
+
+        if (request.Sorting is not null && request.Sorting.Any())
+        {
+            // Note: Multi column sorting is not supported at this moment
+            sortString = request.Sorting.FirstOrDefault()!.SortString;
+            sortDirection = request.Sorting.FirstOrDefault()!.SortDirection;
+        }
+        result = await requestService.GetAllWithChildern();
+        return await Task.FromResult(new GridDataProviderResult<Request> { Data = result.ToArray() , TotalCount = result.ToArray().Length });
+    }
+    private void navigate(int Id)
+    {
+        NavigationManager.NavigateTo($"/request/{Id}");
+    }
+}
