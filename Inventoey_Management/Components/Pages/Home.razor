@@ -1,5 +1,34 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Components.Forms
+@inject NavigationManager Navigation
+<div class="container-fluid d-flex justify-content-center align-items-center flex-column">
+    <div style="height: 270px;" class="d-flex mt-4 gap-xxl-5 align-items-around">
+        <TotalClients />
+        <TotalRequest />
+        <LessComponent />
+    </div>
+    @* cahrt section *@
+    <div class="mt-5 p-4">
+        <BarChar />
+    </div>
+    <div class="mt-5 p-4">
+        <LinerChart />
+    </div>
+</div>
+@code {
+    private string username = string.Empty;
+    private string password = string.Empty;
 
-<h1>Inventory Management</h1>
-
-Welcome to your new app.
+    private void HandleLogin()
+    {
+        // Implement your login logic here
+        if (username == "admin" && password == "password") // Example check
+        {
+            Navigation.NavigateTo("/home");
+        }
+        else
+        {
+            // Show error message
+        }
+    }
+}
