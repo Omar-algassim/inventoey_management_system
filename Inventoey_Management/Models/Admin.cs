@@ -1,7 +1,7 @@
 ﻿using SQLite;
+using SQLiteNetExtensions.Attributes;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace Inventoey_Management.Models
@@ -11,8 +11,11 @@ namespace Inventoey_Management.Models
         [Unique]
         public string Username { get; set; } = string.Empty;
         public string? PasswordHash { get; set; }
-        [ForeignKey("Inventory")]
+        
+        [ForeignKey(typeof(Inventory))]
         public int InventoryId { get; set; }
         
+        [ManyToOne]
+        public Inventory? Inventory { get; set; }
     }
 }
