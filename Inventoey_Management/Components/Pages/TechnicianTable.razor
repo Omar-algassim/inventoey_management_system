@@ -1,0 +1,45 @@
+﻿
+<Grid TItem="Technician"
+      Class="table table-hover table-bordered text-nowrap"
+      DataProvider="CustomersDataProvider"
+      AllowPaging="true"
+      AllowSorting="true"
+      AllowFiltering="true"
+      Responsive="true"
+      Unit="Unit.Px">
+
+    <GridColumns>
+        <GridColumn TItem="Technician" Freeze="true" FreezeLeftPosition="0" HeaderText="رقم الطلب" PropertyName="Id" SortString="Id" SortKeySelector="item => item.Id" FilterTextboxWidth="50" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
+            @context.Id
+        </GridColumn>
+        <GridColumn TItem="Technician" HeaderText="التاريخ" PropertyName="UpdatedAt" SortString="CustomerName" SortKeySelector="item => item.UpdatedAt" FilterTextboxWidth="80">
+            @context.UpdatedAt
+        </GridColumn>
+        <GridColumn TItem="Technician" Filterable="false" HeaderText="أسم العميل" PropertyName="BuildingName" SortString="BuildingName" SortKeySelector="item => item.Name" FilterTextboxWidth="100">
+            @context.Name
+        </GridColumn>
+        <GridColumn TItem="Technician" HeaderText="رقم العميل" PropertyName="Contact Number" SortString="ContactNumber" SortKeySelector="item => item.PhoneNumber" FilterTextboxWidth="80">
+            @context.PhoneNumber
+        </GridColumn>
+    </GridColumns>
+</Grid>
+
+@code {
+    [Inject] public ITechnicianService TechnicianService { get; set; } = default!;
+    private List<Technician> result = new();
+
+    private async Task<GridDataProviderResult<Technician>> CustomersDataProvider(GridDataProviderRequest<Technician> Technician)
+    {
+        string sortString = "";
+        SortDirection sortDirection = SortDirection.None;
+
+        if (Technician.Sorting is not null && Technician.Sorting.Any())
+        {
+            // Note: Multi column sorting is not supported at this moment
+            sortString = Technician.Sorting.FirstOrDefault()!.SortString;
+            sortDirection = Technician.Sorting.FirstOrDefault()!.SortDirection;
+        }
+        result = await TechnicianService.GetAllWithChildern();
+        return await Task.FromResult(new GridDataProviderResult<Technician> { Data = result.ToArray(), TotalCount = result.ToArray().Length });
+    }
+}
