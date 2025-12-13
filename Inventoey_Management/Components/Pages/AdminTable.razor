@@ -1,0 +1,53 @@
+﻿@inject NavigationManager NavigationManager
+
+<Grid TItem="Admin"
+      Class="table table-hover table-bordered text-nowrap"
+      DataProvider="CustomersDataProvider"
+      AllowPaging="true"
+      AllowSorting="true"
+      AllowFiltering="true"
+      Responsive="true"
+      Unit="Unit.Px">
+
+    <GridColumns>
+        <GridColumn TItem="Admin" Freeze="true" FreezeLeftPosition="0" HeaderText="رقم الطلب" PropertyName="Id" SortString="Id" SortKeySelector="item => item.Id" FilterTextboxWidth="50" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
+            @context.Id
+        </GridColumn>
+        <GridColumn TItem="Admin" HeaderText="التاريخ" PropertyName="UpdatedAt" SortString="CustomerName" SortKeySelector="item => item.UpdatedAt" FilterTextboxWidth="80" TextAlignment="Alignment.Center">
+            @context.UpdatedAt
+        </GridColumn>
+        <GridColumn TItem="Admin" Filterable="false" HeaderText="أسم العميل" PropertyName="BuildingName" SortString="BuildingName" SortKeySelector="item => item.Name" FilterTextboxWidth="100" TextAlignment="Alignment.Center">
+            @context.Name
+        </GridColumn>
+        <GridColumn TItem="Admin" Filterable="false" HeaderText="القسم" PropertyName="Department" SortString="Department" SortKeySelector="item => item.Username" FilterTextboxWidth="120" TextAlignment="Alignment.Center">
+            @context.Username
+        </GridColumn>
+        <GridColumn Filterable="false" TItem="Request" HeaderText="عمليات">
+            <button class="btn btn-warning" @onclick="() => navigate(context.Id)">تعديل</button>
+        </GridColumn>
+    </GridColumns>
+</Grid>
+
+@code {
+    [Inject] public IAdminServices AdminService { get; set; } = default!;
+    private List<Admin> result = new();
+
+    private async Task<GridDataProviderResult<Admin>> CustomersDataProvider(GridDataProviderRequest<Admin> Admin)
+    {
+        string sortString = "";
+        SortDirection sortDirection = SortDirection.None;
+
+        if (Admin.Sorting is not null && Admin.Sorting.Any())
+        {
+            // Note: Multi column sorting is not supported at this moment
+            sortString = Admin.Sorting.FirstOrDefault()!.SortString;
+            sortDirection = Admin.Sorting.FirstOrDefault()!.SortDirection;
+        }
+        result = await AdminService.GetAllWithChildern();
+        return await Task.FromResult(new GridDataProviderResult<Admin> { Data = result.ToArray(), TotalCount = result.ToArray().Length });
+    }
+    private void navigate(int Id)
+    {
+        NavigationManager.NavigateTo($"/admin/{Id}");
+    }
+}
