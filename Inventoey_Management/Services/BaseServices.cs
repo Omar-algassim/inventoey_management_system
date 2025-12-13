@@ -71,6 +71,11 @@ namespace Inventoey_Management.Services
             await _database.InsertWithChildrenAsync(entity, recursive: true);
             return entity;
         }
+        public async Task<T> UpdateWithChilderenAsync(T entity)
+        {
+            await _database.UpdateWithChildrenAsync(entity);
+            return entity;
+        }
         protected Task<List<T>> QueryAsync(Expression<Func<T, bool>> predicate)
         {
             return _database.Table<T>().Where(predicate).ToListAsync();
