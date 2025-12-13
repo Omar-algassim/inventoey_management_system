@@ -1,0 +1,65 @@
+﻿@inject NavigationManager NavigationManager
+
+<Grid TItem="Client"
+      Class="table table-hover table-bordered text-nowrap"
+      DataProvider="CustomersDataProvider"
+      AllowPaging="true"
+      AllowSorting="true"
+      AllowFiltering="true"
+      Responsive="true"
+      Unit="Unit.Px">
+
+    <GridColumns>
+        <GridColumn TItem="Client" Freeze="true" FreezeLeftPosition="0" HeaderText="رقم الطلب" PropertyName="Id" SortString="Id" SortKeySelector="item => item.Id" FilterTextboxWidth="50" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
+            @context.Id
+        </GridColumn>
+        <GridColumn TItem="Client" HeaderText="التاريخ" PropertyName="UpdatedAt" SortString="CustomerName" SortKeySelector="item => item.UpdatedAt" FilterTextboxWidth="80">
+            @context.UpdatedAt
+        </GridColumn>
+        <GridColumn TItem="Client" Filterable="false" HeaderText="أسم العميل" PropertyName="BuildingName" SortString="BuildingName" SortKeySelector="item => item.BuildingName" FilterTextboxWidth="100">
+            @context.Name
+        </GridColumn>
+        <GridColumn TItem="Client" Filterable="false" HeaderText="القسم" PropertyName="Department" SortString="Department" SortKeySelector="item => item.Department" FilterTextboxWidth="120">
+            @context.Department
+        </GridColumn>
+        <GridColumn TItem="Client" Filterable="false" HeaderText="رقم المبنى" PropertyName="BuildingNumber" SortString="BuildingNumber" SortKeySelector="item => item.BuildingNumber" FilterTextboxWidth="150">
+            @context.BuildingNumber
+        </GridColumn>
+        <GridColumn TItem="Client" Filterable="false" HeaderText="رقم المكتب" PropertyName="OfficeNumber" SortString="OfficeNumber" SortKeySelector="item => item.OfficeNumber" FilterTextboxWidth="80">
+            @context.OfficeNumber
+        </GridColumn>
+        <GridColumn TItem="Client" HeaderText="اسم المبنى" PropertyName="Name" SortString="Name" SortKeySelector="item => item.Name" FilterTextboxWidth="80">
+            @context.BuildingName
+        </GridColumn>
+        <GridColumn TItem="Client" HeaderText="رقم العميل" PropertyName="Contact Number" SortString="ContactNumber" SortKeySelector="item => item.ContactNumber" FilterTextboxWidth="80">
+            @context.ContactNumber
+        </GridColumn>
+        <GridColumn Filterable="false" TItem="Request" HeaderText="عمليات">
+            <button class="btn btn-warning" @onclick="() => navigate(context.Id)">تعديل</button>
+        </GridColumn>
+    </GridColumns>
+</Grid>
+
+@code {
+    [Inject] public IClientService clientService { get; set; } = default!;
+    private List<Client> result = new();
+
+    private async Task<GridDataProviderResult<Client>> CustomersDataProvider(GridDataProviderRequest<Client> client)
+    {
+        string sortString = "";
+        SortDirection sortDirection = SortDirection.None;
+
+        if (client.Sorting is not null && client.Sorting.Any())
+        {
+            // Note: Multi column sorting is not supported at this moment
+            sortString = client.Sorting.FirstOrDefault()!.SortString;
+            sortDirection = client.Sorting.FirstOrDefault()!.SortDirection;
+        }
+        result = await clientService.GetAllWithChildern();
+        return await Task.FromResult(new GridDataProviderResult<Client> { Data = result.ToArray(), TotalCount = result.ToArray().Length });
+    }
+    private void navigate(int Id)
+    {
+        NavigationManager.NavigateTo($"/client/{Id}");
+    }
+}
