@@ -117,8 +117,16 @@
                 {
                     <option value="@c.Id">@c.Name   |   @c.Code </option>
                 }
-            </InputSelect>
+                </InputSelect>
             </div>
+            @if(component != null)
+            {    
+            <div class="col w-25 mb-2">
+                <label>عدد القطع</label>
+                <NumberInput TValue="int" @bind-Value="componentQuantity" EnableMinMax="@true" Max="@component.Amount" class="form-control w-25" />
+                <ValidationMessage For="@(() => request.MachineCode)" />
+            </div>
+            }
             <div class="form-group col mb-3">
                 <div>
                     <label>حالة الطلب</label>
@@ -169,7 +177,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-12 text-right d-flex w-auto justify-content-between">
+        <div class="col-md-12 m-3 text-right d-flex w-auto justify-content-between">
             <Button Type="ButtonType.Button" Color="ButtonColor.Secondary" Class="float-end" @onclick="Cancel">إلغاء</Button>
             <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2" Disabled="@disableSave">حفظ</Button>
         </div>
@@ -178,15 +186,16 @@
 
 @code {
     private bool disableSave = false; // Start with save disabled
-    private Client client = null!;
+    private Client client = new();
     private Request request = new();
     private Component component = null!;
-    private Technician technician = null!;
+    private Technician technician = new();
     private EditContext? editContext;
     private int clientId;
     private int? componentId;
     private int technicianId;
-    private string status = "";
+    private int componentQuantity = 1; 
+    private string status = "newRequest";
     private Client[] clients = [];
     private Component[] components = [];
     private Technician[] technicians = [];
@@ -205,7 +214,7 @@
         components = (await CopmonentService.GetAvailable()).ToArray();
         technicians = (await TechnicianService.GetAllAsync()).ToArray();
 
-        colorBage = BadgeColor.Warning;
+        colorBage = BadgeColor.Info;
 
     }
 
@@ -220,12 +229,25 @@
         await TechnicianService.SaveAsync(technician);
         if (componentId.HasValue)
         {
-            component.Amount -= 1;
-            await CopmonentService.SaveAsync(component);
+            await CopmonentService.UpdateStockAsync(component.Id, componentQuantity);
             request.Component = component;
         }
         else request.Component = null;
-        await RequestService.SaveWithChilderenAsync(request);
+        try
+        {
+            await RequestService.SaveWithChilderenAsync(request);
+        }
+        catch
+        {
+            var toastError = new ToastMessage
+                {
+                    Title = "حفظ بيانات الموظف",
+                    Message = $"حدث خطأ اثناء الحفظ",
+                    AutoHide = true,
+                    Type = ToastType.Danger,
+                    IconName = IconName.Bug,
+                };
+        }
 
         var toastMessage = new ToastMessage
         {
