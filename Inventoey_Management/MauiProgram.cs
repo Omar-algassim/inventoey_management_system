@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
-using Inventoey_Management.Database;
-using SQLite;
+﻿using Inventoey_Management.Database;
 using Inventoey_Management.Models;
+using Inventoey_Management.Services;
+using Microsoft.Extensions.Logging;
+using SQLite;
 
 namespace Inventoey_Management
 {
@@ -35,6 +36,16 @@ namespace Inventoey_Management
 
                 return connection;
             });
+            // Register services
+            builder.Services.AddSingleton<IAdminServices, AdminService>();
+            builder.Services.AddSingleton<IComponentService, ComponentService>();
+            builder.Services.AddSingleton<IInventoryService, InventoryService>();
+            builder.Services.AddSingleton<ITechnicianService, TechnicianService>();
+            builder.Services.AddSingleton<IClientService, ClientService>();
+            builder.Services.AddSingleton<IRequestService, RequestService>();
+
+            // blazor bootstrap injection
+            builder.Services.AddBlazorBootstrap();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

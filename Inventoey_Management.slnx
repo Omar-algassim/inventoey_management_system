@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="Inventoey_Management/Inventoey_Management.csproj" />
+  <Project Path="Inventoey_Management/Inventoey_Management.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
 </Solution>

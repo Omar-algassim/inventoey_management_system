@@ -1,0 +1,38 @@
+﻿@page "/home"
+
+@using Inventoey_Management.Services
+@using Inventoey_Management.Models
+@inject NavigationManager Navigation
+@inject IAdminServices AdminService
+
+.مرحبا بك في نظام إدارة المخزون
+<button class="btn btn-primary" @onclick="getData">get data</button>
+<button class="btn btn-primary" @onclick="RegisterAdmin">Register new Admin</button>
+ <div>
+ </div>
+@code {
+    bool isClicked = false;
+    string adminText = "";
+    string password = "";
+    private async Task RegisterAdmin()
+    {
+        await AdminService.CreateUser(new Admin
+        {
+            Username = "admin 2",
+            PasswordHash = "its here"
+        });
+
+    }
+    private async Task getData()
+    {
+        var admins = await AdminService.GetAllAsync();
+        Navigation.NavigateTo("/request");
+        foreach (var admin in admins)
+        {
+            isClicked = true;
+            adminText = admin.Username;
+            password = admin.PasswordHash;
+            Console.WriteLine($"Admin: {admin.Username}");
+        }
+    }
+}

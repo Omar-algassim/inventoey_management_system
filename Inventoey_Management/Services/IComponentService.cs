@@ -8,7 +8,7 @@ namespace Inventoey_Management.Services
     {
         Task<List<Component>> GetAvailable();
         Task<List<Component>> GetLowStockAsync(int threshold);
-        Task<int> UpdateStockAsync(int componentId, int amount);
+        Task<Component> UpdateStockAsync(int componentId, int amount);
         Task<List<Component>> SearchByDescriptionAsync(string description);
     }
 }

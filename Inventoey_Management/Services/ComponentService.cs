@@ -16,13 +16,11 @@ namespace Inventoey_Management.Services
             return QueryAsync(c => c.Amount <= threshold);
         }
 
-        public async Task<int> UpdateStockAsync(int componentId, int amount)
+        public async Task<Component> UpdateStockAsync(int componentId, int amount)
         {
             var component = await GetByIdAsync(componentId);
-            if (component == null) return 0;
-
-            component.Amount = amount;
-            return await SaveAsync(component);
+            component.Amount -= amount;
+            return await UpdateAsync(componentId, component);
         }
 
         public Task<List<Component>> SearchByDescriptionAsync(string description)
