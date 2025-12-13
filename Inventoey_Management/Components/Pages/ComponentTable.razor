@@ -1,0 +1,45 @@
+﻿
+<Grid TItem="Component"
+      Class="table table-hover table-bordered text-nowrap"
+      DataProvider="CustomersDataProvider"
+      AllowPaging="true"
+      AllowSorting="true"
+      AllowFiltering="true"
+      Responsive="true"
+      Unit="Unit.Px">
+
+    <GridColumns>
+        <GridColumn TItem="Component" Freeze="true" FreezeLeftPosition="0" HeaderText="رقم الطلب" PropertyName="Id" SortString="Id" SortKeySelector="item => item.Id" FilterTextboxWidth="50" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
+            @context.Id
+        </GridColumn>
+        <GridColumn TItem="Component" HeaderText="التاريخ" PropertyName="UpdatedAt" SortString="CustomerName" SortKeySelector="item => item.UpdatedAt" FilterTextboxWidth="80" TextAlignment="Alignment.Center">
+            @context.UpdatedAt
+        </GridColumn>
+        <GridColumn TItem="Component" Filterable="false" HeaderText="أسم القطعة" PropertyName="Name" SortString="Name" SortKeySelector="item => item.Name" FilterTextboxWidth="100" TextAlignment="Alignment.Center">
+            @context.Name
+        </GridColumn>
+        <GridColumn TItem="Component" HeaderText="كود القطعة" PropertyName="Code" SortString="Code" SortKeySelector="item => item.Code" FilterTextboxWidth="80" TextAlignment="Alignment.Center">
+            @context.Code
+        </GridColumn>
+    </GridColumns>
+</Grid>
+
+@code {
+    [Inject] public IComponentService ComponentService { get; set; } = default!;
+    private List<Component> result = new();
+
+    private async Task<GridDataProviderResult<Component>> CustomersDataProvider(GridDataProviderRequest<Component> Component)
+    {
+        string sortString = "";
+        SortDirection sortDirection = SortDirection.None;
+
+        if (Component.Sorting is not null && Component.Sorting.Any())
+        {
+            // Note: Multi column sorting is not supported at this moment
+            sortString = Component.Sorting.FirstOrDefault()!.SortString;
+            sortDirection = Component.Sorting.FirstOrDefault()!.SortDirection;
+        }
+        result = await ComponentService.GetAllWithChildern();
+        return await Task.FromResult(new GridDataProviderResult<Component> { Data = result.ToArray(), TotalCount = result.ToArray().Length });
+    }
+}
