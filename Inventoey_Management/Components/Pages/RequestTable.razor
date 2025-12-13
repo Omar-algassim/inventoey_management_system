@@ -15,21 +15,20 @@
         <GridColumn TItem="Request" HeaderText="التاريخ" PropertyName="UpdatedAt" SortString="CustomerName" SortKeySelector="item => item.UpdatedAt" FilterTextboxWidth="80">
             @context.UpdatedAt
         </GridColumn>
-        <GridColumn TItem="Request" Filterable="false" HeaderText="حالة الطلب" PropertyName="Status" SortString="Status" SortKeySelector="item => item.Status" FilterTextboxWidth="50"
-                    ColumnClass="@(x => x.Status == "done" ? "table-success" : x.Status == "canceled" ? "table-danger" : "table-warning")">
-            >
+        <GridColumn TItem="Request" HeaderText="حالة الطلب" PropertyName="Status" SortString="Status" SortKeySelector="item => item.Status" FilterTextboxWidth="50"
+                    ColumnClass="@(x => x.Status == "done" ? "table-success" : x.Status == "canceled" ? "table-danger" : x.Status == "newRequest" ? "table-info" :"table-warning")">
             @context.Status
         </GridColumn>
-        <GridColumn TItem="Request" HeaderText="اسم المبنى" PropertyName="BuildingName" SortString="BuildingName" SortKeySelector="item => item.Client != null ? item.Client.BuildingName : null" FilterTextboxWidth="100">
+        <GridColumn TItem="Request" Filterable="false" HeaderText="اسم المبنى" PropertyName="BuildingName" SortString="BuildingName" SortKeySelector="item => item.Client != null ? item.Client.BuildingName : null" FilterTextboxWidth="100">
             @context.Client?.BuildingName
         </GridColumn>
-        <GridColumn TItem="Request" HeaderText="القسم" PropertyName="Department" SortString="Department" SortKeySelector="item => item.Client != null ? item.Client.Department : null" FilterTextboxWidth="120">
+        <GridColumn TItem="Request" Filterable="false" HeaderText="القسم" PropertyName="Department" SortString="Department" SortKeySelector="item => item.Client != null ? item.Client.Department : null" FilterTextboxWidth="120">
             @context.Client?.Department
         </GridColumn>
-        <GridColumn TItem="Request" HeaderText="رقم المبنى" PropertyName="BuildingNumber" SortString="BuildingNumber" SortKeySelector="item => item.Client != null ? item.Client.BuildingNumber : null" FilterTextboxWidth="150">
+        <GridColumn TItem="Request" Filterable="false" HeaderText="رقم المبنى" PropertyName="BuildingNumber" SortString="BuildingNumber" SortKeySelector="item => item.Client != null ? item.Client.BuildingNumber : null" FilterTextboxWidth="150">
             @context.Client?.BuildingNumber
         </GridColumn>
-        <GridColumn TItem="Request" HeaderText="رقم المكتب" PropertyName="OfficeNumber" SortString="OfficeNumber" SortKeySelector="item => item.Client != null ? item.Client.OfficeNumber : null" FilterTextboxWidth="80">
+        <GridColumn TItem="Request" Filterable="false" HeaderText="رقم المكتب" PropertyName="OfficeNumber" SortString="OfficeNumber" SortKeySelector="item => item.Client != null ? item.Client.OfficeNumber : null" FilterTextboxWidth="80">
             @context.Client?.OfficeNumber
         </GridColumn>
         <GridColumn TItem="Request" HeaderText="اسم العميل" PropertyName="Name" SortString="Name" SortKeySelector="item => item.Client != null ? item.Client.Name : null" FilterTextboxWidth="80">
@@ -38,13 +37,13 @@
         <GridColumn TItem="Request" HeaderText="رقم العميل" PropertyName="Contact Number" SortString="ContactNumber" SortKeySelector="item => item.Client != null ? item.Client.ContactNumber : null" FilterTextboxWidth="80">
             @context.Client?.ContactNumber
         </GridColumn>
-        <GridColumn TItem="Request" HeaderText="نوع الآلة" PropertyName="MachineType" SortString="MachineType" SortKeySelector="item => item.MachineType" FilterTextboxWidth="80">
+        <GridColumn TItem="Request" Filterable="false" HeaderText="نوع الآلة" PropertyName="MachineType" SortString="MachineType" SortKeySelector="item => item.MachineType" FilterTextboxWidth="80">
             @context.MachineType
         </GridColumn>
-        <GridColumn TItem="Request" HeaderText="كود الآلة" PropertyName="MachineCode" SortString="MachineCode" SortKeySelector="item => item.MachineCode" FilterTextboxWidth="80">
+        <GridColumn TItem="Request" Filterable="false" HeaderText="كود الآلة" PropertyName="MachineCode" SortString="MachineCode" SortKeySelector="item => item.MachineCode" FilterTextboxWidth="80">
             @context.MachineCode
         </GridColumn>
-        <GridColumn TItem="Request" HeaderText="القطعة المستهلكة" PropertyName="Component" SortString="Component" SortKeySelector="item => item.Component != null ? item.Component.Name : null" FilterTextboxWidth="80">
+        <GridColumn TItem="Request" Filterable="false" HeaderText="القطعة المستهلكة" PropertyName="Component" SortString="Component" SortKeySelector="item => item.Component != null ? item.Component.Name : null" FilterTextboxWidth="80">
             @context.Component?.Name
         </GridColumn>
         <GridColumn Filterable="false" TItem="Request" HeaderText="عمليات">
