@@ -1,0 +1,130 @@
+﻿@page "/admin/new"
+
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager NavigationManager
+@inject IAdminServices adminService
+@inject ToastService ToastService
+@inject Inventoey_Management.Services.UserState UserState
+
+<style>
+    .valid.modified:not([type=checkbox]) {
+        outline: 1px solid #26b050;
+    }
+
+    .invalid {
+        outline: 1px solid red;
+    }
+
+    .validation-message {
+        color: red;
+    }
+</style>
+<h1 class="m-xxl-3">مشرف جديد</h1>
+@if (admin == null)
+{
+    <p>Loading...</p>
+}
+<EditForm Model="@admin" OnValidSubmit="HandleOnValidSubmit">
+    <DataAnnotationsValidator />
+    <h3 class="mt-lg-5">معلومات المشرف</h3>
+
+    <div class="container gap-3 border border-1 border-black rounded-3 p-3 m-4">
+        <div class="row">
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">اسم المشرف<span class="text-danger">*</span></label>
+                <div>
+                    <InputText class="form-control" @bind-Value="admin.Name" Placeholder="Enter Full name" />
+                    <ValidationMessage For="@(() => admin.Name)" />
+                </div>
+            </div>
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">اسم المستخدم <span class="text-danger">*</span></label>
+                <div>
+                    <InputText @bind-Value="admin.Username" class="form-control" Placeholder="Enter spare code" />
+                    <ValidationMessage For="@(() => admin.Username)" />
+                </div>
+            </div>
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">كلمة المرور <span class="text-danger">*</span></label>
+                <div>
+                    <PasswordInput @bind-Value="admin.PasswordHash" class="form-control" Placeholder="Enter spare code" />
+                    <ValidationMessage For="@(() => admin.PasswordHash)" />
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-form-label w-100">اختر نوع المستخدم</label>
+            @if (isFirstAdmin)
+            {
+                <InputText class="form-control" @bind-Value="admin.Type" Disabled="true" />
+                <small class="text-muted">الحساب الأول يجب أن يكون بصلاحية مشرف</small>
+            }
+            else
+            {
+                <InputSelect @bind-Value="admin.Type" class="form-control">
+                    <option value="admin">مشرف</option>
+                    <option value="employe">موظف</option>
+                </InputSelect>
+            }
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 m-3 text-right d-flex w-auto justify-content-between">
+            <Button Type="ButtonType.Button" Color="ButtonColor.Secondary" Class="float-end" @onclick="Cancel">إلغاء</Button>
+            <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">حفظ</Button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private Admin admin = new();
+    private bool isFirstAdmin;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var existing = await adminService.GetAllAsync();
+        isFirstAdmin = existing.Count == 0;
+        if (isFirstAdmin)
+        {
+            admin.Type = "admin";
+        }
+    }
+
+    public async void HandleOnValidSubmit()
+    {
+        try
+        {
+            await adminService.CreateUser(admin);
+            UserState.SetAdmin(admin);
+
+            var toastMessage = new ToastMessage
+            {
+                Title = "حفظ بيانات المشرف",
+                Message = "تم حفظ بيانات المشرف بنجاح",
+                AutoHide = true,
+                Type = ToastType.Success,
+                IconName = IconName.CheckCircleFill,
+            };
+
+            ToastService.Notify(toastMessage);
+            NavigationManager.NavigateTo("/admins");
+        }
+        catch
+        {
+            var toastError = new ToastMessage
+            {
+                Title = "حفظ بيانات المشرف",
+                Message = "حدث خطأ اثناء الحفظ",
+                AutoHide = true,
+                Type = ToastType.Danger,
+                IconName = IconName.Bug,
+            };
+            ToastService.Notify(toastError);
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/admins");
+    }
+}
