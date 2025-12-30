@@ -1,0 +1,163 @@
+﻿@page "/admin/{Id:int}"
+
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager NavigationManager
+
+<style>
+    .valid.modified:not([type=checkbox]) {
+        outline: 1px solid #26b050;
+    }
+
+    .invalid {
+        outline: 1px solid red;
+    }
+
+    .validation-message {
+        color: red;
+    }
+</style>
+<h1 class="m-xxl-3">مشرف جديد</h1>
+@if (admin == null)
+{
+    <p>Loading...</p>
+}
+<EditForm Model="@admin" OnValidSubmit="HandleOnValidSubmit">
+    <DataAnnotationsValidator />
+    <h3 class="mt-lg-5">معلومات المشرف</h3>
+
+    <div class="container gap-3 border border-1 border-black rounded-3 p-3 m-4">
+        <div class="row">
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">اسم المشرف<span class="text-danger">*</span></label>
+                <div>
+                    <InputText class="form-control" @bind-Value="admin.Name" Placeholder="Enter Full name" />
+                    <ValidationMessage For="@(() => admin.Name)" />
+                </div>
+            </div>
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">اسم المستخدم <span class="text-danger">*</span></label>
+                <div>
+                    <InputText @bind-Value="admin.Username" class="form-control" Placeholder="Enter spare code" />
+                    <ValidationMessage For="@(() => admin.Username)" />
+                </div>
+            </div>
+            <div class="form-group col mb-3">
+                <label class="col-form-label w-100">كلمة المرور <span class="text-danger">*</span></label>
+                <div>
+                    <PasswordInput @bind-Value="admin.PasswordHash" class="form-control" Placeholder="Enter spare code" />
+                    <ValidationMessage For="@(() => admin.PasswordHash)" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 m-3 text-right d-flex w-auto justify-content-between">
+            <Button Type="ButtonType.Button" Color="ButtonColor.Secondary" Class="float-end" @onclick="Cancel">إلغاء</Button>
+            <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">حفظ</Button>
+            <Button Type="ButtonType.Button" Color="ButtonColor.Danger" Class="float-end me-4" @onclick="OnShowModalClick">مسح</Button>
+        </div>
+    </div>
+</EditForm>
+<Modal @ref="modal" title="تأكيد" IsVerticallyCentered="true">
+    <BodyTemplate>
+        هل تريد فعلا حذف هذا المشرف؟
+        <Icon Name="IconName.Trash" Size="IconSize.x4" Color="IconColor.Danger" class="mr-5" />
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">إلغاء</Button>
+        <Button Color="ButtonColor.Danger" @onclick="DeleteClient">حذف</Button>
+    </FooterTemplate>
+</Modal>
+
+@code {
+    [Parameter]
+    public int Id { get; set; } = default!;
+    [Inject] private ToastService ToastService { get; set; } = default!;
+    [Inject] private IAdminServices adminService { get; set; } = default!;
+
+    private Modal modal = default!;
+    private Admin admin = new();
+    private EditContext? editContext;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        admin = await adminService.GetByIdAsync(Id);
+    }
+
+
+    public async void HandleOnValidSubmit()
+    {
+        try
+        {
+            await adminService.UpdateUser(admin);
+        }
+        catch
+        {
+            var toastError = new ToastMessage
+            {
+                Title = "حفظ بيانات المشرف",
+                Message = $"حدث خطأ اثناء الحفظ",
+                AutoHide = true,
+                Type = ToastType.Danger,
+                IconName = IconName.Bug,
+            };
+        }
+
+        var toastMessage = new ToastMessage
+        {
+            Title = "حفظ بيانات المشرف",
+            Message = $"تم حفظ بيانات المشرف بنجاح",
+            AutoHide = true,
+            Type = ToastType.Success,
+            IconName = IconName.CheckCircleFill,
+        };
+
+        ToastService.Notify(toastMessage);
+        NavigationManager.NavigateTo("/admins");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/admins");
+    }
+     private async Task OnShowModalClick()
+    {
+        await modal.ShowAsync();
+    }
+
+    private async Task OnHideModalClick()
+    {
+        await modal.HideAsync();
+    }
+    private async void DeleteClient()
+    {
+        try
+        {
+            await adminService.DeleteAsync(admin);
+        }
+        catch
+        {
+            var toastError = new ToastMessage
+            {
+                Title = "حذف بيانات المشرف",
+                Message = $"حدث خطأ اثناء الحذف",
+                AutoHide = true,
+                Type = ToastType.Danger,
+                IconName = IconName.Bug,
+            };
+            ToastService.Notify(toastError);
+            return;
+        }
+        var toastMessage = new ToastMessage
+        {
+            Title = "حذف بيانات المشرف",
+            Message = $"تم حذف بيانات المشرف بنجاح",
+            AutoHide = true,
+            Type = ToastType.Success,
+            IconName = IconName.CheckCircleFill,
+        };
+        ToastService.Notify(toastMessage);
+        NavigationManager.NavigateTo("/clients");
+    }
+}
