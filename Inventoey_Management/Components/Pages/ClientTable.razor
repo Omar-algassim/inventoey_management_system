@@ -1,4 +1,18 @@
 ﻿@inject NavigationManager NavigationManager
+@inject NavigationManager NavigationManager
+@using CommunityToolkit.Maui.Storage
+@using CsvHelper
+@using CsvHelper.Configuration
+@using System.Globalization
+@using Microsoft.Maui.Storage
+@using System.Text
+
+<div class="d-flex justify-content-between">
+    <div>
+        <Button Color="ButtonColor.Info" class="btn btn-info mb-4" @onclick="OnShowImportModalClick">استيراد البيانات <Icon Name="IconName.Inbox" /></Button>
+        <Button Color="ButtonColor.Info" class="btn btn-info mb-4" @onclick="PickFolder">تصدير البيانات <Icon Name="IconName.FileArrowUp" /></Button>
+    </div>
+</div>
 
 <Grid TItem="Client"
       Class="table table-hover table-bordered text-nowrap"
@@ -7,59 +21,202 @@
       AllowSorting="true"
       AllowFiltering="true"
       Responsive="true"
+      AllowRowClick="true"
+      OnRowClick="r => navigate(r.Item.Id)"
       Unit="Unit.Px">
 
     <GridColumns>
         <GridColumn TItem="Client" Freeze="true" FreezeLeftPosition="0" HeaderText="رقم الطلب" PropertyName="Id" SortString="Id" SortKeySelector="item => item.Id" FilterTextboxWidth="50" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
             @context.Id
         </GridColumn>
-        <GridColumn TItem="Client" HeaderText="التاريخ" PropertyName="UpdatedAt" SortString="CustomerName" SortKeySelector="item => item.UpdatedAt" FilterTextboxWidth="80">
-            @context.UpdatedAt
+        <GridColumn TItem="Client" HeaderText="التاريخ" PropertyName="UpdatedAt" SortString="UpdatedAt" SortKeySelector="item => item.UpdatedAt" FilterTextboxWidth="150" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
+            @context.UpdatedAt.Date
         </GridColumn>
-        <GridColumn TItem="Client" Filterable="false" HeaderText="أسم العميل" PropertyName="BuildingName" SortString="BuildingName" SortKeySelector="item => item.BuildingName" FilterTextboxWidth="100">
+        <GridColumn TItem="Client" Filterable="true" HeaderText="أسم العميل" PropertyName="Name" SortKeySelector="item => item.Name" FilterTextboxWidth="100" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
             @context.Name
         </GridColumn>
-        <GridColumn TItem="Client" Filterable="false" HeaderText="القسم" PropertyName="Department" SortString="Department" SortKeySelector="item => item.Department" FilterTextboxWidth="120">
+        <GridColumn TItem="Client" Filterable="false" HeaderText="القسم" PropertyName="Department" SortString="Department" SortKeySelector="item => item.Department" FilterTextboxWidth="120" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
             @context.Department
         </GridColumn>
-        <GridColumn TItem="Client" Filterable="false" HeaderText="رقم المبنى" PropertyName="BuildingNumber" SortString="BuildingNumber" SortKeySelector="item => item.BuildingNumber" FilterTextboxWidth="150">
+        <GridColumn TItem="Client" Filterable="false" HeaderText="رقم المبنى" PropertyName="BuildingNumber" SortString="BuildingNumber" SortKeySelector="item => item.BuildingNumber" FilterTextboxWidth="150" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
             @context.BuildingNumber
         </GridColumn>
-        <GridColumn TItem="Client" Filterable="false" HeaderText="رقم المكتب" PropertyName="OfficeNumber" SortString="OfficeNumber" SortKeySelector="item => item.OfficeNumber" FilterTextboxWidth="80">
+        <GridColumn TItem="Client" Filterable="false" HeaderText="رقم المكتب" PropertyName="OfficeNumber" SortString="OfficeNumber" SortKeySelector="item => item.OfficeNumber" FilterTextboxWidth="80" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
             @context.OfficeNumber
         </GridColumn>
-        <GridColumn TItem="Client" HeaderText="اسم المبنى" PropertyName="Name" SortString="Name" SortKeySelector="item => item.Name" FilterTextboxWidth="80">
+        <GridColumn TItem="Client" HeaderText="اسم المبنى" PropertyName="BuildingName" SortString="BuildingName" SortKeySelector="item => item.BuildingName" FilterTextboxWidth="80" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
             @context.BuildingName
         </GridColumn>
-        <GridColumn TItem="Client" HeaderText="رقم العميل" PropertyName="Contact Number" SortString="ContactNumber" SortKeySelector="item => item.ContactNumber" FilterTextboxWidth="80">
+        <GridColumn TItem="Client" HeaderText="رقم العميل" PropertyName="ContactNumber" SortString="ContactNumber" SortKeySelector="item => item.ContactNumber" FilterTextboxWidth="80" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
             @context.ContactNumber
-        </GridColumn>
-        <GridColumn Filterable="false" TItem="Request" HeaderText="عمليات">
-            <button class="btn btn-warning" @onclick="() => navigate(context.Id)">تعديل</button>
         </GridColumn>
     </GridColumns>
 </Grid>
 
+@* Modals *@
+<Modal @ref="ImportModal" title="استيراد بيانات" IsVerticallyCentered="true">
+    <BodyTemplate>
+        حدد المستند المراد الاستيراد منه
+        @if (!string.IsNullOrWhiteSpace(FileName))
+        {
+            <div class="mt-2">@FileName</div>
+        }
+        @if (isMathc)
+        {
+            <span class="text-danger">هناك عدد (@MatchRecord.Count) بيانات مطابقة في قاعدة البيانات</span>
+            <div class="p-2 m-1">
+                <Button Color="ButtonColor.Primary" @onclick="ImportRemoveDoublicate">تخطي البيانات المكررة</Button>
+                <Button Color="ButtonColor.Danger" @onclick="ImportWithDoublicate">حفظ الكل</Button>
+            </div>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideImportModalClick">إلغاء</Button>
+        <Button Color="ButtonColor.Danger" @onclick="CheckData">استيراد</Button>
+    </FooterTemplate>
+</Modal>
+
+<Modal @ref="ExportModal" title="تصدير بيانات" IsVerticallyCentered="true">
+    <BodyTemplate>
+        موقع الملف: @FolderPath
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideExportModalClick">إلغاء</Button>
+        <Button Color="ButtonColor.Danger" @onclick="ExportData">تصدير</Button>
+    </FooterTemplate>
+</Modal>
+
 @code {
     [Inject] public IClientService clientService { get; set; } = default!;
     private List<Client> result = new();
+    private IFolderPicker folderPicker = default!;
+    private Modal ImportModal = default!;
+    private Modal ExportModal = default!;
+    private string FileName = string.Empty;
+    private string FolderPath = string.Empty;
+    private bool isMathc = false;
+    private List<Client> ClientRecord = new List<Client>();
+    private List<Client> MatchRecord = new List<Client>();
+    private ElementReference fileInput;
+    private IEnumerable<Client> data = Array.Empty<Client>();
 
-    private async Task<GridDataProviderResult<Client>> CustomersDataProvider(GridDataProviderRequest<Client> client)
+    private async Task<GridDataProviderResult<Client>> CustomersDataProvider(GridDataProviderRequest<Client> Client)
     {
         string sortString = "";
         SortDirection sortDirection = SortDirection.None;
 
-        if (client.Sorting is not null && client.Sorting.Any())
+        if (Client.Sorting is not null && Client.Sorting.Any())
         {
             // Note: Multi column sorting is not supported at this moment
-            sortString = client.Sorting.FirstOrDefault()!.SortString;
-            sortDirection = client.Sorting.FirstOrDefault()!.SortDirection;
+            sortString = Client.Sorting.FirstOrDefault()!.SortString;
+            sortDirection = Client.Sorting.FirstOrDefault()!.SortDirection;
         }
         result = await clientService.GetAllWithChildern();
-        return await Task.FromResult(new GridDataProviderResult<Client> { Data = result.ToArray(), TotalCount = result.ToArray().Length });
+        data = Client.ApplyTo(result).Data ?? Enumerable.Empty<Client>();
+        StateHasChanged();
+        return await Task.FromResult(Client.ApplyTo(result));
     }
+
     private void navigate(int Id)
     {
         NavigationManager.NavigateTo($"/client/{Id}");
+    }
+
+    private async Task CheckData()
+    {
+        var fileResult = await FilePicker.PickAsync(new PickOptions
+        {
+            PickerTitle = "Select Client CSV",
+            FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+            {
+                { DevicePlatform.WinUI, new[] { ".csv" } },
+            })
+        });
+
+        if (fileResult is null)
+        {
+            return;
+        }
+
+        FileName = fileResult.FullPath ?? fileResult.FileName;
+
+        using (var stream = await fileResult.OpenReadAsync())
+        using (var reader = new StreamReader(stream, Encoding.UTF8))
+        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+        {
+            ClientRecord = csv.GetRecords<Client>().ToList();
+            MatchRecord = await clientService.MatchRecords(ClientRecord);
+            if (MatchRecord.Count > 0)
+            {
+                // display the confirm overwrite or skip
+                isMathc = true;
+                StateHasChanged();
+            }
+            else
+            {
+                await ImportWithDoublicate();
+                await ImportModal.HideAsync();
+            }
+        }
+    }
+    private async Task ImportWithDoublicate()
+    {
+        await clientService.ImportData(ClientRecord);
+    }
+
+    private async Task ImportRemoveDoublicate()
+    {
+        foreach (Client Client in MatchRecord)
+        {
+            ClientRecord.RemoveAll(t => t.ContactNumber == Client.ContactNumber);
+        }
+        await clientService.ImportData(ClientRecord);
+        await ImportModal.HideAsync();
+    }
+
+    private async void ExportData()
+    {
+        string file = $"\\Client{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv";
+        string fullPath = string.Concat(FolderPath, file);
+        using (var writer = new StreamWriter(fullPath, false, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true)))
+        using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+        {
+            if (result.Count > 0) csv.WriteRecords(data);
+        }
+        await ExportModal.HideAsync();
+    }
+
+    private void OnFileSelected(ChangeEventArgs args)
+    {
+        FileName = args.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
+    }
+    private async Task OnShowImportModalClick()
+    {
+        await ImportModal.ShowAsync();
+    }
+
+    private async Task OnHideImportModalClick()
+    {
+        await ImportModal.HideAsync();
+    }
+    private async Task OnShowExportModalClick()
+    {
+        await ExportModal.ShowAsync();
+    }
+
+    private async Task OnHideExportModalClick()
+    {
+        await ExportModal.HideAsync();
+    }
+
+    private async Task PickFolder()
+    {
+        var result = await FolderPicker.Default.PickAsync();
+        if (result.IsSuccessful)
+        {
+            FolderPath = result.Folder.Path;
+            await ExportModal.ShowAsync();
+        }
     }
 }

@@ -1,4 +1,18 @@
-﻿
+﻿@using CommunityToolkit.Maui.Storage
+@using CsvHelper
+@using CsvHelper.Configuration
+@using System.Globalization
+@using Microsoft.Maui.Storage
+@using System.Text
+@using System.Linq
+
+<div class="d-flex justify-content-between">
+    <div>
+        <Button Color="ButtonColor.Info" class="btn btn-info mb-4" @onclick="OnShowImportModalClick">استيراد البيانات <Icon Name="IconName.Inbox" /></Button>
+        <Button Color="ButtonColor.Info" class="btn btn-info mb-4" @onclick="PickFolder">تصدير البيانات <Icon Name="IconName.FileArrowUp" /></Button>
+    </div>
+</div>
+
 <Grid TItem="Component"
       Class="table table-hover table-bordered text-nowrap"
       DataProvider="CustomersDataProvider"
@@ -6,27 +20,75 @@
       AllowSorting="true"
       AllowFiltering="true"
       Responsive="true"
+      AllowRowClick="true"
+      OnRowClick="r => navigate(r.Item.Id)"
       Unit="Unit.Px">
 
     <GridColumns>
-        <GridColumn TItem="Component" Freeze="true" FreezeLeftPosition="0" HeaderText="رقم الطلب" PropertyName="Id" SortString="Id" SortKeySelector="item => item.Id" FilterTextboxWidth="50" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
+        <GridColumn TItem="Component" Freeze="true" FreezeLeftPosition="0" HeaderText="رقم القطعة" PropertyName="Id" SortString="Id" SortKeySelector="item => item.Id" FilterTextboxWidth="50" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
             @context.Id
         </GridColumn>
-        <GridColumn TItem="Component" HeaderText="التاريخ" PropertyName="UpdatedAt" SortString="CustomerName" SortKeySelector="item => item.UpdatedAt" FilterTextboxWidth="80" TextAlignment="Alignment.Center">
-            @context.UpdatedAt
+        <GridColumn TItem="Component" HeaderText="التاريخ" PropertyName="UpdatedAt" SortString="UpdatedAt" SortKeySelector="item => item.UpdatedAt.Date" FilterTextboxWidth="80" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
+            @context.UpdatedAt.Date
         </GridColumn>
-        <GridColumn TItem="Component" Filterable="false" HeaderText="أسم القطعة" PropertyName="Name" SortString="Name" SortKeySelector="item => item.Name" FilterTextboxWidth="100" TextAlignment="Alignment.Center">
+        <GridColumn TItem="Component" Filterable="false" HeaderText="أسم القطعة" PropertyName="Name" SortString="Name" SortKeySelector="item => item.Name" FilterTextboxWidth="100" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
             @context.Name
         </GridColumn>
-        <GridColumn TItem="Component" HeaderText="كود القطعة" PropertyName="Code" SortString="Code" SortKeySelector="item => item.Code" FilterTextboxWidth="80" TextAlignment="Alignment.Center">
+        <GridColumn TItem="Component" HeaderText="كود القطعة" PropertyName="Code" SortString="Code" SortKeySelector="item => item.Code" FilterTextboxWidth="80" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
             @context.Code
+        </GridColumn>
+        <GridColumn TItem="Component" HeaderText="كمية القطعة" PropertyName="Amount" SortString="Amount" SortKeySelector="item => item.Amount" FilterTextboxWidth="80" HeaderTextAlignment="Alignment.Center" TextAlignment="Alignment.Center">
+            @context.Amount
         </GridColumn>
     </GridColumns>
 </Grid>
+@* Modals *@
+<Modal @ref="ImportModal" title="استيراد بيانات" IsVerticallyCentered="true">
+    <BodyTemplate>
+        حدد المستند المراد الاستيراد منه
+        @if (!string.IsNullOrWhiteSpace(FileName))
+        {
+            <div class="mt-2">@FileName</div>
+        }
+        @if (isMathc)
+        {
+            <span class="text-danger">هناك عدد (@MatchRecord.Count) بيانات مطابقة في قاعدة البيانات</span>
+            <div class="p-2 m-1">
+                <Button Color="ButtonColor.Primary" @onclick="ImportRemoveDoublicate">تخطي البيانات المكررة</Button>
+                <Button Color="ButtonColor.Danger" @onclick="ImportWithDoublicate">حفظ الكل</Button>
+            </div>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideImportModalClick">إلغاء</Button>
+        <Button Color="ButtonColor.Danger" @onclick="CheckData">استيراد</Button>
+    </FooterTemplate>
+</Modal>
+
+<Modal @ref="ExportModal" title="تصدير بيانات" IsVerticallyCentered="true">
+    <BodyTemplate>
+        موقع الملف: @FolderPath
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideExportModalClick">إلغاء</Button>
+        <Button Color="ButtonColor.Danger" @onclick="ExportData">تصدير</Button>
+    </FooterTemplate>
+</Modal>
 
 @code {
     [Inject] public IComponentService ComponentService { get; set; } = default!;
+    [Inject] public NavigationManager NavigationManager { get; set; } = default!;
     private List<Component> result = new();
+    private IFolderPicker folderPicker = default!;
+    private Modal ImportModal = default!;
+    private Modal ExportModal = default!;
+    private string FileName = string.Empty;
+    private string FolderPath = string.Empty;
+    private bool isMathc = false;
+    private List<Component> ComponentRecord = new List<Component>();
+    private List<Component> MatchRecord = new List<Component>();
+    private ElementReference fileInput;
+    private IEnumerable<Component> data = Array.Empty<Component>();
 
     private async Task<GridDataProviderResult<Component>> CustomersDataProvider(GridDataProviderRequest<Component> Component)
     {
@@ -40,6 +102,137 @@
             sortDirection = Component.Sorting.FirstOrDefault()!.SortDirection;
         }
         result = await ComponentService.GetAllWithChildern();
-        return await Task.FromResult(new GridDataProviderResult<Component> { Data = result.ToArray(), TotalCount = result.ToArray().Length });
+        data = Component.ApplyTo(result).Data ?? Enumerable.Empty<Component>();
+        StateHasChanged();
+        return await Task.FromResult(Component.ApplyTo(result));
+    }
+
+    private async Task CheckData()
+    {
+        var fileResult = await FilePicker.PickAsync(new PickOptions
+        {
+            PickerTitle = "Select Component CSV",
+            FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+            {
+                { DevicePlatform.WinUI, new[] { ".csv" } },
+            })
+        });
+
+        if (fileResult is null)
+        {
+            return;
+        }
+
+        FileName = fileResult.FullPath ?? fileResult.FileName;
+
+        using (var stream = await fileResult.OpenReadAsync())
+        using (var reader = new StreamReader(stream, Encoding.UTF8))
+        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+        {
+            ComponentRecord = csv.GetRecords<Component>().ToList();
+            MatchRecord = await ComponentService.MatchRecords(ComponentRecord);
+            if (MatchRecord.Count > 0)
+            {
+                // display the confirm overwrite or skip
+                isMathc = true;
+                StateHasChanged();
+            }
+            else
+            {
+                await ImportWithDoublicate();
+                await ImportModal.HideAsync();
+            }
+        }
+    }
+    private async Task ImportWithDoublicate()
+    {
+        await ComponentService.ImportData(ComponentRecord);
+    }
+
+    private async Task ImportRemoveDoublicate()
+    {
+        foreach (Component Component in MatchRecord)
+        {
+            ComponentRecord.RemoveAll(t => t.Code == Component.Code);
+        }
+        await ComponentService.ImportData(ComponentRecord);
+        await ImportModal.HideAsync();
+    }
+
+    private sealed class ComponentExportDto
+    {
+        public int Id { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
+        public int Amount { get; set; }
+        public string Description { get; set; } = string.Empty;
+    }
+
+    private ComponentExportDto MapToExportDto(Component component)
+    {
+        return new ComponentExportDto
+        {
+            Id = component.Id,
+            UpdatedAt = component.UpdatedAt,
+            Name = component.Name,
+            Code = component.Code,
+            Amount = component.Amount,
+            Description = component.Description
+        };
+    }
+
+    private async void ExportData()
+    {
+        string file = $"\\Component{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv";
+        string fullPath = string.Concat(FolderPath, file);
+        using (var writer = new StreamWriter(fullPath, false, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true)))
+        using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+        {
+            if (result.Count > 0)
+            {
+                var exportModels = data.Select(MapToExportDto).ToList();
+                csv.WriteRecords(exportModels);
+            }
+        }
+        await ExportModal.HideAsync();
+    }
+
+    private void OnFileSelected(ChangeEventArgs args)
+    {
+        FileName = args.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
+    }
+    private async Task OnShowImportModalClick()
+    {
+        await ImportModal.ShowAsync();
+    }
+
+    private async Task OnHideImportModalClick()
+    {
+        await ImportModal.HideAsync();
+    }
+    private async Task OnShowExportModalClick()
+    {
+        await ExportModal.ShowAsync();
+    }
+
+    private async Task OnHideExportModalClick()
+    {
+        await ExportModal.HideAsync();
+    }
+
+    private async Task PickFolder()
+    {
+        var result = await FolderPicker.Default.PickAsync();
+        if (result.IsSuccessful)
+        {
+            FolderPath = result.Folder.Path;
+            await ExportModal.ShowAsync();
+        }
+    }
+    private void navigate(int id)
+    {
+        NavigationManager.NavigateTo($"/component/{id}");
     }
 }

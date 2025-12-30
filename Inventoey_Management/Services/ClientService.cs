@@ -17,16 +17,25 @@ namespace Inventoey_Management.Services
             return QueryAsync(c => c.BuildingName.Contains(buildingName));
         }
 
-        public Task<List<Client>> GetByFloorAsync(int floor)
-        {
-            return QueryAsync(c => c.Floor == floor);
-        }
-
         public Task<Client?> GetByOfficeNumberAsync(string officeNumber)
         {
             return _database.Table<Client>()
                            .Where(c => c.OfficeNumber == officeNumber)
                            .FirstOrDefaultAsync();
+        }
+        public async Task<List<Client>> MatchRecords(List<Client> records)
+        {
+            List<Client> MatchRecords = default!;
+
+            foreach (Client re in records)
+            {
+                var data = await GetByIdAsync(re.Id);
+                if (data != null && data.Id == re.Id)
+                {
+                    MatchRecords.Add(re);
+                }
+            }
+            return MatchRecords;
         }
     }
 }

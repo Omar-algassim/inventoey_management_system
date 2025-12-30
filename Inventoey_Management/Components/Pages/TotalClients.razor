@@ -1,6 +1,5 @@
-
 <div class="border border-1 h-dvh rounded align-content-around justify-content-between flex-wrap border-black p-4 d-flex flex-column">
-    <div>
+    <div calss="border-bottom-1">
         <p class="mt-4 fs-1">إجمالي العملاء</p>
     </div>
     <div class="p-2 fs-2 text-end fw-bolder d-flex justify-content-around align-items-center">
@@ -14,12 +13,14 @@
 </div>
 
 @code {
+    
+    [Inject] private IClientService ClientService { get; set; } = default!;
     private int TotalClientsCount { get; set; }
+    private Client[] clients = [];
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate fetching total clients count from a service
-        await Task.Delay(500);
-        TotalClientsCount = 100; // This would typically come from a database or API
+        clients = (await ClientService.GetAllAsync()).ToArray();
+        TotalClientsCount = clients.Length;
     }
 }

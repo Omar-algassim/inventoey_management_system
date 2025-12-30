@@ -10,5 +10,6 @@ namespace Inventoey_Management.Services
         Task<Admin?> GetByUsernameAsync(string username);
         Task<bool> ValidateCredentialsAsync(string username, string password);
         Task<List<Admin>> GetByInventoryIdAsync(int inventoryId);
+        Task<List<Admin>> MatchRecords(List<Admin> records);
     }
 }

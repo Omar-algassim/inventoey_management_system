@@ -5,7 +5,7 @@
         <p class="mt-4 fs-1">اجمالي الطلبات</p>
     </div>
     <div class="p-2 fs-2 text-end fw-bolder d-flex justify-content-around align-items-center">
-        @TotalClientsCount
+        @TotalRequestsCount
         <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="blue" class="bi bi-card-checklist"
             viewBox="0 0 16 16">
             <path
@@ -17,12 +17,13 @@
 </div>
 
 @code {
-    private int TotalClientsCount { get; set; }
+    [Inject] private IRequestService RequestService { get; set; } = default!;
+    private int TotalRequestsCount { get; set; }
+    private Request[] requests = [];
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate fetching total clients count from a service
-        await Task.Delay(500);
-        TotalClientsCount = 100; // This would typically come from a database or API
+        requests = (await RequestService.GetAllAsync()).ToArray();
+        TotalRequestsCount = requests.Length;
     }
 }

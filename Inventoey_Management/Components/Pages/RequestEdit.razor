@@ -16,19 +16,20 @@
         color: red;
     }
 </style>
-<h1 class="m-xxl-3">طلب جديد</h1>
+<h1 class="m-xxl-3">تعديل طلب</h1>
 @if (request == null)
 {
     <p>Loading...</p>
 }
-<EditForm Model="@request" OnValidSubmit="HandleOnValidSubmit">
-    <DataAnnotationsValidator />
+<EditForm Model="@request" OnValidSubmit="HandleOnValidSubmit" OnInvalidSubmit="InvalidateForm">
+    <DataAnnotationsValidator  />
+    <ValidationSummary />
     <h3 class="mt-lg-5">معلومات الموظف</h3>
     @* Choose exist client *@
     <div class="form-group m-4 mb-3">
         <label class="col-form-label w-100">اختر موظفًا موجودًا</label>
         <div>
-            <InputSelect @bind-Value="clientId" class="form-control" @onchange="OnClientSelected">
+            <InputSelect @bind-Value="clientId" class="form-control" @bind-Value:after="OnClientSelected">
                 <option value="">-- اختر موظفًا --</option>
                 @foreach (var c in clients)
                 {
@@ -51,7 +52,7 @@
         <div class="form-group col mb-3">
             <label class="col-form-label w-100">رقم التواصل <span class="text-danger">*</span></label>
             <div>
-                    <InputNumber @bind-Value="client.ContactNumber" disabled="@true" class="form-control" Placeholder="Enter contact Number" />
+                    <InputText @bind-Value="client.ContactNumber" disabled="@true" class="form-control" Placeholder="Enter contact Number" />
                 <ValidationMessage For="@(() => client.ContactNumber)" />
             </div>
         </div>
@@ -112,20 +113,32 @@
         <div class="row">
             <div class="form-group col mb-3">
             <label>اختر قطعة غيار</label>
-                <InputSelect @bind-Value="componentId" class="form-control" @onchange="OnComponentSelected">
+                <InputSelect @bind-Value="componentId" class="form-control" @bind-Value:after="OnComponentSelected">
                 <option value="">-- Choose spare part --</option>
                     @foreach (var c in components)
                 {
                     <option value="@c.Id">@c.Name   |   @c.Code </option>
                 }
             </InputSelect>
+            @if (component != null && 0 >= component.Amount) {<p class="text-danger">لا تتوفر هذه القطعة في المخزن</p>}
             </div>
+            @if (component != null)
+            {
+                <div class="col w-25 d-flex justify-content-between mb-2">
+                    <div class="">
+                    <label>عدد القطع</label>
+                        <NumberInput TValue="int" @bind-Value="request.ComponentQuantity" EnableMinMax="@true" Max="@component.Amount" Min="0" class="form-control w-50" />
+                        <ValidationMessage For="@(() => request.ComponentQuantity)" />
+                    </div>
+                    <p class="mt-3">القطع المستهلكة : @componentQuantity</p>
+                </div>
+            }
             <div class="form-group col mb-3">
                 <div>
                     <label>حالة الطلب</label>
-                    <Badge Color="@colorBage" Type VisuallyHiddenText="@request.Status">@request.Status</Badge>
+                    <Badge Color="@colorBage" Type VisuallyHiddenText="@RequestStatus[request.Status]">@RequestStatus[request.Status]</Badge>
                 </div>
-                <InputSelect @bind-Value="status" class="form-control" @onchange="OnStatusSelected">
+                <InputSelect @bind-Value="status" class="form-control" @bind-Value:after="OnStatusSelected">
                     <option value="newRequest">طلب جديد</option>
                     <option value="pending">تحت المعالجة</option>
                     <option value="canceled">ملغي</option>
@@ -143,25 +156,9 @@
     </div>
     <h3 class="mt-lg-5">معلومات الفني</h3>
     <div class="container gap-3 border border-1 border-black rounded-3 p-3 m-4">
-        <div class="row">
-            <div class="form-group col mb-3">
-                <label class="col-form-label w-100">اسم الفني<span class="text-danger">*</span></label>
-                <div>
-                    <InputText @bind-Value="technician.Name" disabled="@true" class="form-control" Placeholder="Enter Techncian name" />
-                    <ValidationMessage For="@(() => technician.Name)" />
-                </div>
-            </div>
-            <div class="form-group col mb-3">
-                <label class="col-form-label w-100">رقم الفني<span class="text-danger">*</span></label>
-                <div>
-                    <InputNumber @bind-Value="technician.PhoneNumber" disabled="@true" class="form-control" Placeholder="Enter the Machine code" />
-                    <ValidationMessage For="@(() => technician.PhoneNumber)" />
-                </div>
-            </div>
-        </div>
         <div>
             <label>اختر فني من القائمة</label>
-            <InputSelect @bind-Value="technicianId" class="form-control" @onchange="OnTechnicianSelected">
+            <InputSelect @bind-Value="technicianId" class="form-control" @bind-Value:after="OnTechnicianSelected">
                 <option value="">-- Choose Technicain --</option>
                 @foreach (var tech in technicians)
                 {
@@ -173,22 +170,32 @@
     <div class="row">
         <div class="col-md-12 m-3 text-right d-flex w-auto justify-content-between">
             <Button Type="ButtonType.Button" Color="ButtonColor.Secondary" Class="float-end" @onclick="Cancel">إلغاء</Button>
-            <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2" Disabled="@disableSave">حفظ</Button>
+            <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">حفظ</Button>
+            <Button Type="ButtonType.Button" Color="ButtonColor.Danger" Class="float-end me-4" @onclick="OnShowModalClick">مسح</Button>
         </div>
     </div>
 </EditForm>
+<Modal @ref="modal" title="تأكيد" IsVerticallyCentered="true">
+    <BodyTemplate>
+        هل تريد فعلا حذف هذا الطلب؟
+        <Icon Name="IconName.Trash" Size="IconSize.x4" Color="IconColor.Danger" class="mr-5" />
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">إلغاء</Button>
+        <Button Color="ButtonColor.Danger" @onclick="DeleteRequest">حذف</Button>
+    </FooterTemplate>
+</Modal>
 
 @code {
     [Parameter]
     public int Id { get; set; }
     [Inject] private ToastService ToastService { get; set; } = default!;
     [Inject] private IClientService ClientService { get; set; } = default!;
-    [Inject] private IComponentService CopmonentService { get; set; } = default!;
+    [Inject] private IComponentService ComponentService { get; set; } = default!;
     [Inject] private ITechnicianService TechnicianService { get; set; } = default!;
     [Inject] private IRequestService RequestService { get; set; } = default!;
 
-
-    private bool disableSave = false; // Start with save disabled
+    private Modal modal = default!;
     private Client client = new Client();
     private Request request = new();
     private Component component = null!;
@@ -197,7 +204,7 @@
     private int clientId;
     private int? componentId;
     private int technicianId;
-    private int componentQuantity = 1;
+    private int componentQuantity = 0;
     private string status = "";
     private Client[] clients = [];
     private Component[] components = [];
@@ -207,10 +214,11 @@
     protected override async Task OnInitializedAsync()
     {
         clients = (await ClientService.GetAllAsync()).ToArray();
-        components = (await CopmonentService.GetAvailable()).ToArray();
+        components = (await ComponentService.GetAllAsync()).ToArray();
         technicians = (await TechnicianService.GetAllAsync()).ToArray();
         request = await RequestService.GetByIdAsync(Id);
         status = request.Status;
+        componentQuantity = request.ComponentQuantity;
 
         // Handle potentially unassigned technician ID
         if (request.TechnicianId > 0)
@@ -230,14 +238,23 @@
             if (fetchedClient != null)
                 client = fetchedClient;
         }
+        if (request.ComponentId > 0)
+        {
+            var fetchedComponent = await ComponentService.GetByIdAsync(request.ComponentId);
+            if (fetchedComponent != null)
+            {
+                component = fetchedComponent;
+                componentId = component.Id;
+            }
+        }
 
         colorBage = status == "done"
             ? BadgeColor.Success
             : status == "canceled"
                 ? BadgeColor.Danger
                 : status == "newRequest"
-                ? BadgeColor.Warning
-                : BadgeColor.Info;
+                ? BadgeColor.Info
+                : BadgeColor.Warning;
     }
 
     public async void HandleOnValidSubmit()
@@ -248,8 +265,7 @@
         request.TechnicianId = technicianId;
         if (componentId.HasValue)
         {
-            component.Amount -= 1;
-            await CopmonentService.UpdateStockAsync(component.Id, componentQuantity);
+            await ComponentService.UpdateStockAsync(component.Id, request.ComponentQuantity);
             request.Component = component;
         }
         else request.Component = null;
@@ -285,7 +301,6 @@
                 client.Name = selectedClient.Name;
                 client.ContactNumber = selectedClient.ContactNumber;
                 client.BuildingNumber = selectedClient.BuildingNumber;
-                client.Floor = selectedClient.Floor;
                 client.OfficeNumber = selectedClient.OfficeNumber;
                 client.Department = selectedClient.Department;
             }
@@ -296,29 +311,92 @@
             client = new Client();
         }
     }
-    private void OnComponentSelected()
+    private async void OnComponentSelected()
     {
         if (componentId.HasValue)
         {
-            component = CopmonentService.GetByIdAsync(componentId.Value).Result;
-
+            component = await ComponentService.GetByIdAsync(componentId.Value);
         }
+        else
+        {
+            component = null!;
+        }
+        StateHasChanged();
     }
     private void OnStatusSelected()
     {
-        request.Status = status;
-        colorBage = request.Status == "done"
+        colorBage = status == "done"
             ? BadgeColor.Success
-            : request.Status == "canceled"
+            : status == "canceled"
                 ? BadgeColor.Danger
+                : status == "newRequest"
+                ? BadgeColor.Info
                 : BadgeColor.Warning;
     }
-    private void OnTechnicianSelected()
+    private async void OnTechnicianSelected()
     {
         if (technicianId > 0)
         {
-            technician = TechnicianService.GetByIdAsync(technicianId).Result;
+            technician = await TechnicianService.GetByIdAsync(technicianId);
         }
     }
+    private async void DeleteRequest()
+    {
+        try
+        {
+            await RequestService.DeleteAsync(request);
+        }
+        catch
+        {
+            var toastError = new ToastMessage
+            {
+                Title = "حذف بيانات الطلب",
+                Message = $"حدث خطأ اثناء الحذف",
+                AutoHide = true,
+                Type = ToastType.Danger,
+                IconName = IconName.Bug,
+            };
+            ToastService.Notify(toastError);
+            return;
+        }
+        var toastMessage = new ToastMessage
+        {
+            Title = "حذف بيانات الطلب",
+            Message = $"تم حذف بيانات الطلب بنجاح",
+            AutoHide = true,
+            Type = ToastType.Success,
+            IconName = IconName.CheckCircleFill,
+        };
+        ToastService.Notify(toastMessage);
+        NavigationManager.NavigateTo("/request");
+    }
+    private async Task OnShowModalClick()
+    {
+        await modal.ShowAsync();
+    }
+
+    private async Task OnHideModalClick()
+    {
+        await modal.HideAsync();
+    }
+    private void InvalidateForm()
+    {
+        var toastMessage = new ToastMessage
+        {
+            Title = "invalid Form",
+            Message = $"",
+            AutoHide = true,
+            Type = ToastType.Success,
+            IconName = IconName.CheckCircleFill,
+        };
+        ToastService.Notify(toastMessage);
+    }
+    private Dictionary<string, string> RequestStatus = new Dictionary<string, string>
+    {
+        {"newRequest", "طلب جديد"},
+        {"pending", "تحت المعالجة"},
+        {"canceled", "ملغي"},
+        {"done", "مغلق"}
+    };
 }
 

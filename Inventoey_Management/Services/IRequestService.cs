@@ -11,5 +11,6 @@ namespace Inventoey_Management.Services
         Task<List<Request>> GetByTechnicianIdAsync(int technicianId);
         Task<int> UpdateStatusAsync(int requestId, string newStatus);
         Task<List<Request>> GetPendingRequestsAsync();
+        Task<List<Request>> MatchRecords(List<Request> records);
     }
 }

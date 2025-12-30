@@ -20,14 +20,14 @@
 {
     <p>Loading...</p>
 }
-<EditForm model="@request" OnValidSubmit="HandleOnValidSubmit">
+<EditForm Model="@requestSchema" OnValidSubmit="HandleOnValidSubmit">
     <DataAnnotationsValidator />
     <h3 class="mt-lg-5">معلومات الموظف</h3>
     @* Choose exist client *@
     <div class="form-group m-4 mb-3">
         <label class="col-form-label w-100">اختر موظفًا موجودًا</label>
         <div>
-            <InputSelect @bind-Value="clientId" class="form-control" @onchange="OnClientSelected">
+            <InputSelect @bind-Value="clientId" class="form-control" @bind-Value:after="OnClientSelected">
                 <option value="">-- اختر موظفًا --</option>
                 @foreach (var c in clients)
                 {
@@ -42,23 +42,23 @@
         <div class="form-group col mb-3">
             <label class="col-form-label w-100">اسم الموظف <span class="text-danger">*</span></label>
             <div>
-                <InputText class="form-control" @bind-Value="client.Name" Placeholder="Enter Full name" />
-                <ValidationMessage For="@(() => client.Name)" />
+                <InputText class="form-control" @bind-Value="requestSchema.ClientName" Placeholder="Enter Full name" />
+                <ValidationMessage For="@(() => requestSchema.ClientName)" />
             </div>
         </div>
 
-        <div class="form-group col mb-3">
+       <div class="form-group col mb-3">
             <label class="col-form-label w-100">رقم التواصل <span class="text-danger">*</span></label>
             <div>
-                <InputNumber @bind-Value="client.ContactNumber" class="form-control" Placeholder="Enter contact Number" />
-                <ValidationMessage For="@(() => client.ContactNumber)" />
+                <InputText @bind-Value="requestSchema.ClientPhoneNumber" class="form-control" Placeholder="Enter contact Number" />
+                <ValidationMessage For="@(() => requestSchema.ClientPhoneNumber)" />
             </div>
-        </div>
+       </div>
             <div class="form-group col mb-3">
                 <label class="col-form-label w-100">أسم المبنى<span class="text-danger">*</span></label>
                 <div>
-                    <InputText @bind-Value="client.BuildingName" class="form-control" Placeholder="Enter the Department" />
-                    <ValidationMessage For="@(() => client.BuildingName)" />
+                    <InputText @bind-Value="requestSchema.BuildingName" class="form-control" Placeholder="Enter the Department" />
+                    <ValidationMessage For="@(() => requestSchema.BuildingName)" />
                 </div>
             </div>
         </div>
@@ -67,24 +67,24 @@
             <div class="form-group col mb-3">
                 <label class="col-form-label w-100">رقم المبنى <span class="text-danger">*</span></label>
                 <div>
-                    <InputNumber @bind-Value="client.BuildingNumber" class="form-control" Placeholder="Enter building Number" />
-                    <ValidationMessage For="@(() => client.BuildingNumber)" />
+                    <InputNumber @bind-Value="requestSchema.BuildingNumber" class="form-control" Placeholder="Enter building Number" />
+                    <ValidationMessage For="@(() => requestSchema.BuildingNumber)" />
                 </div>
             </div>
 
             <div class="form-group col mb-3">
                 <label class="col-form-label w-100">رقم المكتب <span class="text-danger">*</span></label>
                 <div>
-                    <InputText @bind-Value="client.OfficeNumber" class="form-control" Placeholder="Enter office Number" />
-                    <ValidationMessage For="@(() => client.OfficeNumber)" />
+                    <InputText @bind-Value="requestSchema.OfficeNumber" class="form-control" Placeholder="Enter office Number" />
+                    <ValidationMessage For="@(() => requestSchema.OfficeNumber)" />
                 </div>
             </div>
 
             <div class="form-group col mb-3">
                 <label class="col-form-label w-100">القسم<span class="text-danger">*</span></label>
                 <div>
-                    <InputText @bind-Value="client.Department" class="form-control" Placeholder="Enter the Department" />
-                    <ValidationMessage For="@(() => client.Department)" />
+                    <InputText @bind-Value="requestSchema.Department" class="form-control" Placeholder="Enter the Department" />
+                    <ValidationMessage For="@(() => requestSchema.Department)" />
                 </div>
             </div>
         </div>
@@ -96,22 +96,22 @@
             <div class="form-group col mb-3">
                 <label class="col-form-label w-100">نوع الالة<span class="text-danger">*</span></label>
                 <div>
-                    <InputText @bind-Value="request.MachineType" class="form-control" Placeholder="Enter the Machine type" />
-                    <ValidationMessage For="@(() => request.MachineType)" />
+                    <InputText @bind-Value="requestSchema.MachineType" class="form-control" Placeholder="Enter the Machine type" />
+                    <ValidationMessage For="@(() => requestSchema.MachineType)" />
                 </div>
             </div>
             <div class="form-group col mb-3">
                 <label class="col-form-label w-100">كود الالة<span class="text-danger">*</span></label>
                 <div>
-                    <InputText @bind-Value="request.MachineCode" class="form-control" Placeholder="Enter the Machine code" />
-                    <ValidationMessage For="@(() => request.MachineCode)" />
+                    <InputText @bind-Value="requestSchema.MachineCode" class="form-control" Placeholder="Enter the Machine code" />
+                    <ValidationMessage For="@(() => requestSchema.MachineCode)" />
                 </div>
             </div>
         </div>
         <div class="row">
             <div class="form-group col mb-3">
             <label>اختر قطعة غيار</label>
-                <InputSelect @bind-Value="componentId" class="form-control" @onchange="OnComponentSelected">
+                <InputSelect @bind-Value="componentId" class="form-control" @bind-Value:after="OnComponentSelected">
                 <option value="">-- Choose spare part --</option>
                     @foreach (var c in components)
                 {
@@ -123,17 +123,18 @@
             {    
             <div class="col w-25 mb-2">
                 <label>عدد القطع</label>
-                <NumberInput TValue="int" @bind-Value="componentQuantity" EnableMinMax="@true" Max="@component.Amount" class="form-control w-25" />
-                <ValidationMessage For="@(() => request.MachineCode)" />
+                <NumberInput TValue="int" @bind-Value="request.ComponentQuantity" EnableMinMax="@true" Max="@component.Amount" Min="0" class="form-control w-25" />
+                    <ValidationMessage For="@(() => request.ComponentQuantity)" />
             </div>
             }
             <div class="form-group col mb-3">
                 <div>
                     <label>حالة الطلب</label>
-                    <Badge Color="@colorBage" Type VisuallyHiddenText="@request.Status">@request.Status</Badge>
+                    <Badge Color="@colorBage" Type VisuallyHiddenText="@RequestStatus[requestSchema.Status]">@RequestStatus[requestSchema.Status]</Badge>
                 </div>
-                <InputSelect @bind-Value="status" class="form-control" @onchange="OnStatusSelected">
-                     <option value="pending">تحت المعالجة</option>
+                <InputSelect @bind-Value="requestSchema.Status" class="form-control" @bind-Value:after="OnStatusSelected">
+                    <option value="newRequest">طلب جديد</option>
+                    <option value="pending">تحت المعالجة</option>
                     <option value="canceled">ملغي</option>
                     <option value="done">مغلق</option>
                 </InputSelect>
@@ -142,32 +143,16 @@
         <div class="form-group col mb-3">
             <label class="col-form-label w-100">ملاحظات</label>
             <div>
-                <TextAreaInput @bind-Value="request.Note" class="form-control" Placeholder="Enter Notes" />
-                <ValidationMessage For="@(() => request.Note)" />
+                <TextAreaInput @bind-Value="requestSchema.Note" class="form-control" Placeholder="Enter Notes" />
+                <ValidationMessage For="@(() => requestSchema.Note)" />
             </div>
         </div>
     </div>
     <h3 class="mt-lg-5">معلومات الفني</h3>
     <div class="container gap-3 border border-1 border-black rounded-3 p-3 m-4">
-        <div class="row">
-            <div class="form-group col mb-3">
-                <label class="col-form-label w-100">اسم الفني<span class="text-danger">*</span></label>
-                <div>
-                    <InputText @bind-Value="technician.Name" class="form-control" Placeholder="Enter Techncian name" />
-                    <ValidationMessage For="@(() => technician.Name)" />
-                </div>
-            </div>
-            <div class="form-group col mb-3">
-                <label class="col-form-label w-100">رقم الفني<span class="text-danger">*</span></label>
-                <div>
-                    <InputNumber @bind-Value="technician.PhoneNumber" class="form-control" Placeholder="Enter the Machine code" />
-                    <ValidationMessage For="@(() => technician.PhoneNumber)" />
-                </div>
-            </div>
-        </div>
         <div>
             <label>اختر فني من القائمة</label>
-            <InputSelect @bind-Value="technicianId" class="form-control" @onchange="OnTechnicianSelected">
+            <InputSelect @bind-Value="technicianId" class="form-control" @bind-Value:after="OnTechnicianSelected">
                 <option value="">-- Choose Technicain --</option>
                 @foreach (var tech in technicians)
                 {
@@ -179,28 +164,26 @@
     <div class="row">
         <div class="col-md-12 m-3 text-right d-flex w-auto justify-content-between">
             <Button Type="ButtonType.Button" Color="ButtonColor.Secondary" Class="float-end" @onclick="Cancel">إلغاء</Button>
-            <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2" Disabled="@disableSave">حفظ</Button>
+            <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">حفظ</Button>
         </div>
     </div>
 </EditForm>
 
 @code {
-    private bool disableSave = false; // Start with save disabled
+
     private Client client = new();
     private Request request = new();
     private Component component = null!;
     private Technician technician = new();
-    private EditContext? editContext;
-    private int clientId;
+    private RequestSchema requestSchema = new();
+    private int? clientId;
     private int? componentId;
-    private int technicianId;
+    private int? technicianId;
     private int componentQuantity = 1; 
-    private string status = "newRequest";
-    private Client[] clients = [];
+    private List<Client> clients = new List<Client> { };
     private Component[] components = [];
     private Technician[] technicians = [];
     private BadgeColor colorBage;
-
 
     [Inject] private ToastService ToastService { get; set; } = default!;
     [Inject] private IClientService ClientService { get; set; } = default!;
@@ -210,56 +193,91 @@
 
     protected override async Task OnInitializedAsync()
     {
-        clients = (await ClientService.GetAllAsync()).ToArray();
+        clients = await ClientService.GetAllAsync();
         components = (await CopmonentService.GetAvailable()).ToArray();
         technicians = (await TechnicianService.GetAllAsync()).ToArray();
 
         colorBage = BadgeColor.Info;
-
     }
-
 
     public async void HandleOnValidSubmit()
     {
+        MapRequestSchemaToEntities();
+
+        if (clientId.HasValue)
+        {
+            request.ClientId = clientId.Value;
+            client = await ClientService.GetByIdAsync(clientId.Value);
+        }
+        else
+        {
+            await ClientService.SaveAsync(client);
+        }
+
+        if (technicianId.HasValue)
+        {
+            request.TechnicianId = technicianId.Value;
+            technician = await TechnicianService.GetByIdAsync(technicianId.Value);
+        }
+        else
+        {
+            await TechnicianService.SaveAsync(technician);
+        }
+
         request.Client = client;
-        request.ClientId = clientId;
         request.Technician = technician;
-        request.TechnicianId = technicianId;
-        await ClientService.SaveAsync(client);
-        await TechnicianService.SaveAsync(technician);
+
         if (componentId.HasValue)
         {
             await CopmonentService.UpdateStockAsync(component.Id, componentQuantity);
             request.Component = component;
         }
-        else request.Component = null;
+        else
+        {
+            request.Component = null;
+        }
+
         try
         {
             await RequestService.SaveWithChilderenAsync(request);
+            var toastMessage = new ToastMessage
+            {
+                Title = "حفظ بيانات الطلب",
+                Message = "تم حفظ بيانات الطلب بنجاح",
+                AutoHide = true,
+                Type = ToastType.Success,
+                IconName = IconName.CheckCircleFill,
+            };
+            ToastService.Notify(toastMessage);
+            NavigationManager.NavigateTo("/request");
         }
         catch
         {
             var toastError = new ToastMessage
-                {
-                    Title = "حفظ بيانات الموظف",
-                    Message = $"حدث خطأ اثناء الحفظ",
-                    AutoHide = true,
-                    Type = ToastType.Danger,
-                    IconName = IconName.Bug,
-                };
+            {
+                Title = "حفظ بيانات الطلب",
+                Message = "حدث خطأ اثناء الحفظ",
+                AutoHide = true,
+                Type = ToastType.Danger,
+                IconName = IconName.Bug,
+            };
+            ToastService.Notify(toastError);
         }
+    }
 
-        var toastMessage = new ToastMessage
-        {
-            Title = "حفظ بيانات الموظف",
-            Message = $"تم حفظ بيانات الموظف بنجاح",
-            AutoHide = true,
-            Type = ToastType.Success,
-            IconName = IconName.CheckCircleFill,
-        };
+    private void MapRequestSchemaToEntities()
+    {
+        client.Name = requestSchema.ClientName;
+        client.ContactNumber = requestSchema.ClientPhoneNumber;
+        client.BuildingName = requestSchema.BuildingName;
+        client.BuildingNumber = requestSchema.BuildingNumber;
+        client.OfficeNumber = requestSchema.OfficeNumber;
+        client.Department = requestSchema.Department;
 
-        ToastService.Notify(toastMessage);
-        NavigationManager.NavigateTo("/request");
+        request.Status = requestSchema.Status;
+        request.MachineType = requestSchema.MachineType;
+        request.MachineCode = requestSchema.MachineCode;
+        request.Note = requestSchema.Note;
     }
 
     private void Cancel()
@@ -274,43 +292,65 @@
             var selectedClient = clients.FirstOrDefault(c => c.Id == clientId);
             if (selectedClient != null)
             {
-                // Copy values from selected client to the current client instance
-                client.Name = selectedClient.Name;
-                client.ContactNumber = selectedClient.ContactNumber;
-                client.BuildingNumber = selectedClient.BuildingNumber;
-                client.Floor = selectedClient.Floor;
-                client.OfficeNumber = selectedClient.OfficeNumber;
-                client.Department = selectedClient.Department;
+                client = selectedClient;
+                requestSchema.ClientName = selectedClient.Name;
+                requestSchema.ClientPhoneNumber = selectedClient.ContactNumber;
+                requestSchema.BuildingNumber = selectedClient.BuildingNumber;
+                requestSchema.OfficeNumber = selectedClient.OfficeNumber;
+                requestSchema.Department = selectedClient.Department;
+                requestSchema.BuildingName = selectedClient.BuildingName;
             }
         }
         else
         {
-            // Clear the form when no client is selected
             client = new Client();
+            requestSchema = new RequestSchema();
         }
     }
-    private void OnComponentSelected()
+
+    private async void OnComponentSelected()
     {
         if (componentId.HasValue)
         {
-            component = CopmonentService.GetByIdAsync(componentId.Value).Result;
-
+            component = await CopmonentService.GetByIdAsync(componentId.Value);
         }
+        else
+        {
+            component = null!;
+        }
+        StateHasChanged();
     }
+
     private void OnStatusSelected()
     {
-        request.Status = status;
-        colorBage = request.Status == "done"
-            ? BadgeColor.Success
-            : request.Status == "canceled"
-                ? BadgeColor.Danger
-                : BadgeColor.Warning;
+        colorBage = requestSchema.Status == "done"
+          ? BadgeColor.Success
+          : requestSchema.Status == "canceled"
+              ? BadgeColor.Danger
+              : requestSchema.Status == "newRequest"
+              ? BadgeColor.Info
+              : BadgeColor.Warning;
+        StateHasChanged();
     }
-    private void OnTechnicianSelected()
+
+    private async void OnTechnicianSelected()
     {
-        if (technicianId > 0)
+        if (technicianId.HasValue)
         {
-            technician = TechnicianService.GetByIdAsync(technicianId).Result;
+            technician = await TechnicianService.GetByIdAsync(technicianId.Value);
         }
     }
+
+    private void FilterClients(ChangeEventArgs arg)
+    {
+        clients.FindAll(c => c.Name == arg.Value);
+    }
+
+    private Dictionary<string, string> RequestStatus = new Dictionary<string, string>
+    {
+        {"newRequest", "طلب جديد"},
+        {"pending", "تحت المعالجة"},
+        {"canceled", "ملغي"},
+        {"done", "مغلق"}
+    };
 }

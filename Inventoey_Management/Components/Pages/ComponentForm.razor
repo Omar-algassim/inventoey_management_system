@@ -1,0 +1,112 @@
+﻿@page "/component/new"
+
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager NavigationManager
+
+<style>
+    .valid.modified:not([type=checkbox]) {
+        outline: 1px solid #26b050;
+    }
+
+    .invalid {
+        outline: 1px solid red;
+    }
+
+    .validation-message {
+        color: red;
+    }
+</style>
+<h1 class="m-xxl-3">قطعة جديدة</h1>
+@if (component == null)
+{
+    <p>Loading...</p>
+}
+<EditForm Model="@component" OnValidSubmit="HandleOnValidSubmit">
+    <DataAnnotationsValidator />
+    <h3 class="mt-lg-5">معلومات القطعة</h3>
+
+    <div class="container gap-3 border border-1 border-black rounded-3 p-3 m-4">
+       <div class="row">
+        <div class="form-group col mb-3">
+            <label class="col-form-label w-100">اسم القطعة<span class="text-danger">*</span></label>
+            <div>
+                <InputText class="form-control" @bind-Value="component.Name" Placeholder="Enter Full name" />
+                <ValidationMessage For="@(() => component.Name)" />
+            </div>
+        </div>
+
+        <div class="form-group col mb-3">
+            <label class="col-form-label w-100">كود القطعة <span class="text-danger">*</span></label>
+            <div>
+                <InputText @bind-Value="component.Code" class="form-control" Placeholder="Enter spare code" />
+                    <ValidationMessage For="@(() => component.Code)" />
+            </div>
+        </div>
+                <div class="form-group col mb-3">
+            <label class="col-form-label w-100"> عدد القطع<span class="text-danger">*</span></label>
+            <div>
+                <InputNumber @bind-Value="component.Amount" class="form-control" Placeholder="Enter spare Amount" />
+                    <ValidationMessage For="@(() => component.Amount)" />
+            </div>
+        </div>
+      </div>
+      </div>
+    <div class="row">
+        <div class="col-md-12 m-3 text-right d-flex w-auto justify-content-between">
+            <Button Type="ButtonType.Button" Color="ButtonColor.Secondary" Class="float-end" @onclick="Cancel">إلغاء</Button>
+            <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">حفظ</Button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private Component component = new();
+    private EditContext? editContext;
+
+    [Inject] private ToastService ToastService { get; set; } = default!;
+    [Inject] private IComponentService ComponentService { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+
+    }
+
+
+    public async void HandleOnValidSubmit()
+    {
+        try
+        {
+            await ComponentService.SaveAsync(component);
+        }
+        catch
+        {
+            var toastError = new ToastMessage
+                {
+                    Title = "حفظ بيانات الموظف",
+                    Message = $"حدث خطأ اثناء الحفظ",
+                    AutoHide = true,
+                    Type = ToastType.Danger,
+                    IconName = IconName.Bug,
+                };
+        }
+
+        var toastMessage = new ToastMessage
+        {
+            Title = "حفظ بيانات الموظف",
+            Message = $"تم حفظ بيانات الموظف بنجاح",
+            AutoHide = true,
+            Type = ToastType.Success,
+            IconName = IconName.CheckCircleFill,
+        };
+
+        ToastService.Notify(toastMessage);
+        NavigationManager.NavigateTo("/components");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/components");
+    }
+
+}

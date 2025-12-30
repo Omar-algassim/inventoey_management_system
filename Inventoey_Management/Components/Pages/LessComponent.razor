@@ -1,9 +1,16 @@
 <div class="border border-1 h-dvh rounded align-content-around justify-content-between flex-wrap border-black p-4 d-flex flex-column">
-    <div>
+    <div class="border-b">
         <p class="mt-4 fs-1">على وشك النفاذ</p>
     </div>
     <div class="p-2 fs-2 text-end fw-bolder d-flex justify-content-around align-items-center">
-        @TotalClientsCount
+        <div class="d-flex flex-column border border-2 p-2 rounded">
+            @if(component != null)
+            {
+            <span class="text-danger">@component.Amount</span>
+            <span class="text-sm-center fs-6 opacity-50 ">Code: @component.Code</span>
+            } else
+            {<span>لاتوجد عناصر</span>}        
+        </div>
         <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="red" class="bi bi-box"
             viewBox="0 0 16 16">
             <path
@@ -13,12 +20,13 @@
 </div>
 
 @code {
-    private int TotalClientsCount { get; set; }
+    private int LessComponentCount { get; set; }
+    [Inject] private IComponentService ComponentService { get; set; } = default!;
+    private Component component = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate fetching total clients count from a service
-        await Task.Delay(500);
-        TotalClientsCount = 100; // This would typically come from a database or API
+        component = await ComponentService.GetMinComponentAmount();
+        // LessComponentCount = components.Length;
     }
 }

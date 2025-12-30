@@ -1,0 +1,167 @@
+﻿@page "/component/{Id:int}"
+
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager NavigationManager
+
+<style>
+    .valid.modified:not([type=checkbox]) {
+        outline: 1px solid #26b050;
+    }
+
+    .invalid {
+        outline: 1px solid red;
+    }
+
+    .validation-message {
+        color: red;
+    }
+</style>
+<h1 class="m-xxl-3">قطعة جديدة</h1>
+@if (component == null)
+{
+    <p>Loading...</p>
+}
+<EditForm Model="@component" OnValidSubmit="HandleOnValidSubmit">
+    <DataAnnotationsValidator />
+    <h3 class="mt-lg-5">معلومات القطعة</h3>
+
+    <div class="container gap-3 border border-1 border-black rounded-3 p-3 m-4">
+       <div class="row">
+        <div class="form-group col mb-3">
+            <label class="col-form-label w-100">اسم القطعة<span class="text-danger">*</span></label>
+            <div>
+                <InputText class="form-control" @bind-Value="component.Name" Placeholder="Enter Full name" />
+                <ValidationMessage For="@(() => component.Name)" />
+            </div>
+        </div>
+
+        <div class="form-group col mb-3">
+            <label class="col-form-label w-100">كود القطعة <span class="text-danger">*</span></label>
+            <div>
+                <InputText @bind-Value="component.Code" class="form-control" Placeholder="Enter spare code" />
+                    <ValidationMessage For="@(() => component.Code)" />
+            </div>
+        </div>
+                <div class="form-group col mb-3">
+            <label class="col-form-label w-100"> عدد القطع<span class="text-danger">*</span></label>
+            <div>
+                <InputNumber @bind-Value="component.Amount" class="form-control" Placeholder="Enter spare Amount" />
+                    <ValidationMessage For="@(() => component.Amount)" />
+            </div>
+        </div>
+      </div>
+      </div>
+    <div class="row">
+        <div class="col-md-12 m-3 text-right d-flex w-auto justify-content-between">
+            <Button Type="ButtonType.Button" Color="ButtonColor.Secondary" Class="float-end" @onclick="Cancel">إلغاء</Button>
+            <Button Type="ButtonType.Submit" Color="ButtonColor.Success" Class="float-end me-2">حفظ</Button>
+            <Button Type="ButtonType.Button" Color="ButtonColor.Danger" Class="float-end me-4" @onclick="OnShowModalClick">مسح</Button>
+        </div>
+    </div>
+</EditForm>
+<Modal @ref="modal" title="تأكيد" IsVerticallyCentered="true">
+    <BodyTemplate>
+        هل تريد فعلا حذف هذه القطعة؟
+        <Icon Name="IconName.Trash" Size="IconSize.x4" Color="IconColor.Danger" class="mr-5" />
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">إلغاء</Button>
+        <Button Color="ButtonColor.Danger" @onclick="DeleteComponent">حذف</Button>
+    </FooterTemplate>
+</Modal>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    [Inject] private ToastService ToastService { get; set; } = default!;
+    [Inject] private IComponentService ComponentService { get; set; } = default!;
+
+    private Modal modal = default!;
+    private Component component = new();
+    private EditContext? editContext;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ComponentService.GetByIdAsync(Id).ContinueWith(task =>
+        {
+            component = task.Result;
+        });
+    }
+
+
+    public async void HandleOnValidSubmit()
+    {
+        try
+        {
+            await ComponentService.UpdateAsync(component.Id, component);
+        }
+        catch
+        {
+            var toastError = new ToastMessage
+                {
+                    Title = "حفظ بيانات القطعة",
+                    Message = $"حدث خطأ اثناء الحفظ",
+                    AutoHide = true,
+                    Type = ToastType.Danger,
+                    IconName = IconName.Bug,
+                };
+        }
+
+        var toastMessage = new ToastMessage
+        {
+            Title = "حفظ بيانات القطعة",
+            Message = $"تم حفظ بيانات القطعة بنجاح",
+            AutoHide = true,
+            Type = ToastType.Success,
+            IconName = IconName.CheckCircleFill,
+        };
+
+        ToastService.Notify(toastMessage);
+        NavigationManager.NavigateTo("/components");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/components");
+    }
+    private async Task OnShowModalClick()
+    {
+        await modal.ShowAsync();
+    }
+
+    private async Task OnHideModalClick()
+    {
+        await modal.HideAsync();
+    }
+    private async void DeleteComponent()
+    {
+        try
+        {
+            await ComponentService.DeleteAsync(component);
+        }
+        catch
+        {
+            var toastError = new ToastMessage
+            {
+                Title = "حذف بيانات القطعة",
+                Message = $"حدث خطأ اثناء الحذف",
+                AutoHide = true,
+                Type = ToastType.Danger,
+                IconName = IconName.Bug,
+            };
+            ToastService.Notify(toastError);
+            return;
+        }
+        var toastMessage = new ToastMessage
+        {
+            Title = "حذف بيانات القطعة",
+            Message = $"تم حذف بيانات القطعة بنجاح",
+            AutoHide = true,
+            Type = ToastType.Success,
+            IconName = IconName.CheckCircleFill,
+        };
+        ToastService.Notify(toastMessage);
+        NavigationManager.NavigateTo("/components");
+    }
+}

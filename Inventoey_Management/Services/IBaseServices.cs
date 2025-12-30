@@ -17,6 +17,7 @@ namespace Inventoey_Management.Services
         Task<List<T>> GetAllWithChildern();
         Task<T> GetByIdWithChilderen(string id);
         Task<T> UpdateWithChilderenAsync(T entity);
+        Task<int> ImportData(List<T> Records);
 
 
     }

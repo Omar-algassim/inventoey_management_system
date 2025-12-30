@@ -12,11 +12,13 @@
     </button>
     <TechnicianTable />
 </div>
-
 @code {
-    private bool isTechnicianFormVisible = false;
+    [Inject] ITechnicianService TechnicianService { get; set; } = default!;
+
+
     private void ShowTechnicianForm()
     {
         NavigationManager.NavigateTo("/Technician/new");
     }
+
 }

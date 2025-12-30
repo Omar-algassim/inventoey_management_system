@@ -1,8 +1,10 @@
-﻿using Inventoey_Management.Models;
+﻿using CsvHelper;
+using Inventoey_Management.Models;
 using SQLite;
 using SQLiteNetExtensionsAsync.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -18,7 +20,7 @@ namespace Inventoey_Management.Services
         }
         public async Task<List<T>> GetAllAsync()
         {
-           return await _database.Table<T>().ToListAsync();
+           return await _database.Table<T>().OrderByDescending(i => i.UpdatedAt).ToListAsync();
         }
 
         public async Task<T> GetByIdAsync(int id)
@@ -79,6 +81,27 @@ namespace Inventoey_Management.Services
         protected Task<List<T>> QueryAsync(Expression<Func<T, bool>> predicate)
         {
             return _database.Table<T>().Where(predicate).ToListAsync();
+        }
+
+        public IEnumerable<T> ImportDataFromCsv(string csvFile)
+        {
+            using (var reader = new StreamReader(csvFile))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            {
+                return csv.GetRecords<T>();
+            }
+        }
+        public async Task<int> ImportData(List<T> Records)
+        {
+            if (Records.Count <= 0) return 0;
+
+            int savedRecord = 0;
+            foreach (var rec in Records)
+            {
+                await SaveAsync(rec);
+                savedRecord += 1;
+            }
+            return savedRecord;
         }
 
     }

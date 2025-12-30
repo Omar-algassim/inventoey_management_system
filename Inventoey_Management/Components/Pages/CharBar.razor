@@ -1,0 +1,167 @@
+﻿@using System.Threading.Tasks
+
+<BarChart @ref="barChart" Width="1000" Height="700" />
+
+@code {
+    [Inject] public IRequestService requestService { get; set; } = default!;
+    private BarChart barChart = default!;
+    private BarChartOptions barChartOptions = default!;
+    private ChartData chartData = default!;
+    private bool waiting = false;
+
+    private int datasetsCount = 0;
+    private int labelsCount = 0;
+    private static readonly string[] months = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+    private Random random = new();
+    private List<Request> requests = new List<Request>{ };
+
+    protected override async Task OnInitializedAsync()
+    {
+        requests = await requestService.GetAllAsync();
+        try
+        {
+            chartData = new ChartData
+            {
+                Labels = GetDefaultDataLabels(12),
+                Datasets = await GetDefaultDataSets()
+            };
+            barChartOptions = new BarChartOptions
+            {
+                Responsive = true,
+                Interaction = new Interaction { Mode = InteractionMode.Index }
+            };
+        }
+        catch (Exception ex)
+        {
+            // Log the error or display it
+            Console.WriteLine($"Error initializing chart: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && chartData != null && barChart != null)
+        {
+            try
+            {
+                await barChart.InitializeAsync(chartData, barChartOptions);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error rendering chart: {ex.Message}");
+            }
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task RandomizeAsync()
+    {
+        if (chartData?.Datasets is null || !chartData.Datasets.Any()) return;
+
+        var newDatasets = new List<IChartDataset>();
+
+        foreach (var dataset in chartData.Datasets)
+        {
+            if (dataset is BarChartDataset barChartDataset
+                && barChartDataset?.Data is not null)
+            {
+                var count = barChartDataset.Data.Count;
+
+                var newData = new List<double?>();
+                for (var i = 0; i < count; i++)
+                {
+                    newData.Add(random.Next(200));
+                }
+
+                barChartDataset.Data = newData;
+                newDatasets.Add(barChartDataset);
+            }
+        }
+
+        chartData.Datasets = newDatasets;
+
+        await barChart.UpdateAsync(chartData, barChartOptions);
+    }
+
+
+    private async Task ShowHorizontalBarChartAsync()
+    {
+        barChartOptions.IndexAxis = "y";
+        await barChart.UpdateAsync(chartData, barChartOptions);
+    }
+
+    private async Task ShowVerticalBarChartAsync()
+    {
+        barChartOptions.IndexAxis = "x";
+        await barChart.UpdateAsync(chartData, barChartOptions);
+    }
+
+    private async Task<List<IChartDataset>> GetDefaultDataSets()
+    {
+        var datasets = new List<IChartDataset>();
+        var SuccessCharBar = new BarChartDataset()
+        {
+            Label = $"مغلق",
+            Data = GetAnalyticRequest("done"),
+            BackgroundColor = new List<string> { "RGB(26, 110, 73)" },
+            BorderColor = new List<string> { "RGB(26, 110, 73)" },
+            BorderWidth = new List<double> { 0 },
+        };
+        var PendingCharBar = new BarChartDataset()
+        {
+            Label = $"تحت التنفيذ",
+            Data = GetAnalyticRequest("pending"),
+            BackgroundColor = new List<string> { "RGB(222, 151, 18)" },
+            BorderColor = new List<string> { "RGB(222, 151, 18)" },
+            BorderWidth = new List<double> { 0 },
+        };
+        var NewCharBar = new BarChartDataset()
+        {
+            Label = $"طلب جديد",
+            Data = GetAnalyticRequest("newRequest"),
+            BackgroundColor = new List<string> { "RGB(26, 51, 110)" },
+            BorderColor = new List<string> { "RGB(26, 51, 110)" },
+            BorderWidth = new List<double> { 0 },
+        };
+
+        datasets.Add(SuccessCharBar);
+        datasets.Add(PendingCharBar);
+        datasets.Add(NewCharBar);
+
+        return datasets;
+    }
+    private List<string> GetDefaultDataLabels(int numberOfLabels)
+    {
+        var labels = new List<string>();
+        for (var index = 0; index < numberOfLabels; index++)
+        {
+            labels.Add(GetNextDataLabel());
+        }
+
+        return labels;
+    }
+
+    private string GetNextDataLabel()
+    {
+        labelsCount += 1;
+        return months[labelsCount - 1];
+    }
+
+    private List<double?> GetAnalyticRequest(string status)
+    {
+        int year = DateTime.Now.Year;
+        int month = DateTime.Now.Month;
+        var data = new List<double?>();
+
+        for (int i = 1; i <= 12; i++)
+        {
+            var count = requests.Count(r => r.Status == status && r.CreatedAt.Year == year && r.CreatedAt.Month == i);
+            data.Add(count);
+        }
+        
+        return data;
+    }
+
+    #region Data Preparation
+    #endregion
+}

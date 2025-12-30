@@ -1,4 +1,6 @@
-﻿using Inventoey_Management.Database;
+﻿using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Storage;
+using Inventoey_Management.Database;
 using Inventoey_Management.Models;
 using Inventoey_Management.Services;
 using Microsoft.Extensions.Logging;
@@ -13,6 +15,7 @@ namespace Inventoey_Management
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -26,30 +29,31 @@ namespace Inventoey_Management
                     Constants.DatabasePath,
                     Constants.Flags);
 
-                // Create all tables
                 connection.CreateTableAsync<Admin>().Wait();
                 connection.CreateTableAsync<Component>().Wait();
                 connection.CreateTableAsync<Inventory>().Wait();
                 connection.CreateTableAsync<Technician>().Wait();
                 connection.CreateTableAsync<Client>().Wait();
+                connection.CreateTableAsync<RequestSchema>().Wait();
                 connection.CreateTableAsync<Request>().Wait();
 
                 return connection;
             });
-            // Register services
+
+            builder.Services.AddSingleton<IFolderPicker>(FolderPicker.Default);
             builder.Services.AddSingleton<IAdminServices, AdminService>();
             builder.Services.AddSingleton<IComponentService, ComponentService>();
             builder.Services.AddSingleton<IInventoryService, InventoryService>();
             builder.Services.AddSingleton<ITechnicianService, TechnicianService>();
             builder.Services.AddSingleton<IClientService, ClientService>();
             builder.Services.AddSingleton<IRequestService, RequestService>();
+            builder.Services.AddSingleton<UserState>(); // shared admin context
 
-            // blazor bootstrap injection
             builder.Services.AddBlazorBootstrap();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();

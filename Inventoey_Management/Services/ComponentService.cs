@@ -34,5 +34,25 @@ namespace Inventoey_Management.Services
         {
             return QueryAsync(c => c.Amount > 0);
         }
+        public Task<Component> GetMinComponentAmount()
+        {
+                       return _database.Table<Component>()
+                            .OrderBy(c => c.Amount)
+                            .FirstOrDefaultAsync();
+        }
+        public async Task<List<Component>> MatchRecords(List<Component> records)
+        {
+            List<Component> MatchRecords = default!;
+
+            foreach (Component re in records)
+            {
+                var data = await GetByIdAsync(re.Id);
+                if (data != null && (data.Id == re.Id || data.Code == re.Code))
+                {
+                    MatchRecords.Add(re);
+                }
+            }
+            return MatchRecords;
+        }
     }
 }

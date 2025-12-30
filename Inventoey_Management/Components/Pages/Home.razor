@@ -1,34 +1,18 @@
-﻿@page "/"
+﻿@page "/home"
 @using Microsoft.AspNetCore.Components.Forms
 @inject NavigationManager Navigation
 <div class="container-fluid d-flex justify-content-center align-items-center flex-column">
-    <div style="height: 270px;" class="d-flex mt-4 gap-xxl-5 align-items-around">
+    <div class="d-flex my-5 border border-3 h-100 gap-xxl-5 w-100 justify-content-around">
         <TotalClients />
         <TotalRequest />
         <LessComponent />
     </div>
     @* cahrt section *@
     <div class="mt-5 p-4">
-        <BarChar />
-    </div>
-    <div class="mt-5 p-4">
-        <LinerChart />
+        <CharBar />
     </div>
 </div>
 @code {
     private string username = string.Empty;
     private string password = string.Empty;
-
-    private void HandleLogin()
-    {
-        // Implement your login logic here
-        if (username == "admin" && password == "password") // Example check
-        {
-            Navigation.NavigateTo("/home");
-        }
-        else
-        {
-            // Show error message
-        }
-    }
 }

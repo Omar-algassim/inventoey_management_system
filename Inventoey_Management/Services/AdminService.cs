@@ -46,13 +46,28 @@ namespace Inventoey_Management.Services
             byte[] hashBytes = SHA256.HashData(passByte);
             return Convert.ToHexString(hashBytes);
         }
-        public Task<Admin> UpdateUser(Admin entity)
+        public async Task<Admin> UpdateUser(Admin entity)
         {
             if (!string.IsNullOrEmpty(entity.PasswordHash))
             {
                 entity.PasswordHash = HashPassword(entity.PasswordHash);
             }
-            return Task.FromResult(entity);
+            await _database.UpdateAsync(entity);
+            return entity;
+        }
+        public async Task<List<Admin>> MatchRecords(List<Admin> records)
+        {
+            List<Admin> MatchRecords = default!;
+
+            foreach (Admin re in records)
+            {
+                var data = await GetByIdAsync(re.Id);
+                if (data != null && data.Id == re.Id)
+                {
+                    MatchRecords.Add(re);
+                }
+            }
+            return MatchRecords;
         }
     }
 }

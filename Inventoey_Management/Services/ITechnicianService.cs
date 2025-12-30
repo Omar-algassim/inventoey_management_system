@@ -5,6 +5,7 @@ namespace Inventoey_Management.Services
 {
     public interface ITechnicianService : IBaseServices<Technician>
     {
-        Task<Technician?> GetByPhoneNumberAsync(int phoneNumber);
+        Task<Technician?> GetByPhoneNumberAsync(string phoneNumber);
+        Task<List<Technician>> MatchRecords(List<Technician> records);
     }
 }
