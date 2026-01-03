@@ -1,6 +1,8 @@
 ﻿@page "/"
 @layout LoginLayout
 @using System.ComponentModel.DataAnnotations
+@inject Inventoey_Management.Services.UserState UserState
+
 <div class="d-flex justify-content-center m-lg-5 h-100 align-items-center flex-column w-100 ">
     <div class="d-flex justify-content-between w-50">
         <h1>تسجيل الدخول</h1>
@@ -16,7 +18,7 @@
      <EditForm Model="Schema" OnValidSubmit="LoginSubmit">
          <div class="form-group d-flex flex-column mb-3">
              <label>اسم المستخدم</label>
-             <InputText @bind-Value="UserName" />
+             <TextInput @bind-Value="UserName" />
              <label>كلمة المرور</label>
              <PasswordInput @bind-Value="password" />
          </div>
@@ -33,11 +35,22 @@
     private string password = "";
     private bool errMessage = false;
 
+    protected override async Task OnInitializedAsync()
+    {
+        var admins = await AdminServices.GetAllAsync();
+        if (admins.Count == 0)
+        {
+            NavigationManager.NavigateTo("/admin/new");
+        }
+        errMessage = false;
+    }
     private async void LoginSubmit()
     {
         bool isAdmin = await AdminServices.ValidateCredentialsAsync(UserName, password);
-        if (isAdmin || UserName == "moh" && password == "2450")
+        if (isAdmin)
         {
+            var admin = await AdminServices.GetByUsernameAsync(UserName);
+            UserState.SetAdmin(admin);
             NavigationManager.NavigateTo("/home");
         } else errMessage = true;
     }
