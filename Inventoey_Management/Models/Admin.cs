@@ -11,7 +11,7 @@ namespace Inventoey_Management.Models
         [Unique]
         public string Username { get; set; } = string.Empty;
         public string? PasswordHash { get; set; }
-        public string Type = "employe";
+        public string Type { get; set; } = "employe";
         
         [ForeignKey(typeof(Inventory))]
         public int InventoryId { get; set; }
